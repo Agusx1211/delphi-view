@@ -1,0 +1,40 @@
+{
+  "name": "vite-template-solid",
+  "version": "0.0.0",
+  "description": "",
+  "scripts": {
+    "start": "vite",
+    "dev": "vite",
+    "build": "vite build",
+    "serve": "vite preview"
+  },
+  "license": "MIT",
+  "devDependencies": {
+    "@suid/vite-plugin": "^0.1.3",
+    "typescript": "^4.9.5",
+    "vite": "^4.1.1",
+    "vite-plugin-solid": "^2.5.0"
+  },
+  "dependencies": {
+    "@0xsequence/abi": "0.0.0-20230512143315",
+    "@0xsequence/account": "0.0.0-20230512143315",
+    "@0xsequence/api": "0.0.0-20230512143315",
+    "@0xsequence/auth": "0.0.0-20230512143315",
+    "@0xsequence/core": "0.0.0-20230512143315",
+    "@0xsequence/guard": "0.0.0-20230512143315",
+    "@0xsequence/indexer": "0.0.0-20230512143315",
+    "@0xsequence/metadata": "0.0.0-20230512143315",
+    "@0xsequence/network": "0.0.0-20230512143315",
+    "@0xsequence/provider": "0.0.0-20230512143315",
+    "@0xsequence/relayer": "0.0.0-20230512143315",
+    "@0xsequence/sessions": "0.0.0-20230512143315",
+    "@0xsequence/signhub": "0.0.0-20230512143315",
+    "@0xsequence/simulator": "0.0.0-20230512143315",
+    "@0xsequence/utils": "0.0.0-20230512143315",
+    "@0xsequence/wallet": "0.0.0-20230512143315",
+    "@suid/icons-material": "^0.6.1",
+    "@suid/material": "^0.12.1",
+    "ethers": "^5.7.2",
+    "solid-js": "^1.6.10"
+  }
+}
