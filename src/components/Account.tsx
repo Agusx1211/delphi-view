@@ -1,75 +1,99 @@
-import { Component, Show } from "solid-js";
+import { Component, Show, createEffect, createSignal } from "solid-js";
 import { Box, Grid, LinearProgress, Paper } from "@suid/material"
-import { NetworkAndStatus, addressLoading, status } from "../stores/InputAddressStore";
 import { NetworksView } from "./Network";
-import { Flag } from "./commons/Flag";
-import { input } from "../stores/InputStore";
+import { Flag, FlagStatus } from "./commons/Flag";
 import { HIGHEST_VERSION } from "../stores/ContextStore";
+import { AccountStatusStore, createStatusStore } from "../stores/AccountStatusStore";
 
-export const GlobalAccountView: Component<{ address: string, status: NetworkAndStatus[] }> = (props) => {
-  const initialVersion = () => props.status.length === 0 ? undefined : props.status[0].original.version
+export const GlobalAccountView: Component<{ store: AccountStatusStore }> = (props) => {
+  const [someFailed, setSomeFailed] = createSignal(false)
+
+  createEffect(() => {
+    setSomeFailed(props.store.networks.some((n) => props.store.error(n.chainId)))
+  })
+
+  const initialImageHash = () => {
+    const loaded = props.store.networks.find((n) => !props.store.loading(n.chainId) && props.store.status(n.chainId))
+    if (!loaded) {
+      return {}
+    }
+
+    return { value: props.store.status(loaded.chainId)!.original.imageHash }
+  }
+
+  const initialVersion = () => {
+    const loaded = props.store.networks.find((n) => !props.store.loading(n.chainId) && props.store.status(n.chainId))
+    if (!loaded) {
+      return {}
+    }
+
+    const version = props.store.status(loaded.chainId)!.original.version
+    return { value: version.toString(), status: version === HIGHEST_VERSION ? 'green' : 'yellow' as FlagStatus }
+  }
+
   const fullyMigrated = () => {
-    if (props.status.length === 0) {
-      return ''
+    const loading = props.store.networks.some((n) => props.store.loading(n.chainId))
+    if (loading) {
+      return {}
     }
 
-    if (props.status.every((s) => s.original.version === HIGHEST_VERSION)) {
-      return 'Yes'
+    if (someFailed()) {
+      return { value: 'Unknown', status: 'red' as FlagStatus }
     }
 
-    if (props.status.some((s) => s.original.version === HIGHEST_VERSION)) {
-      return 'Partial'
+    if (props.store.networks.every((s) => props.store.status(s.chainId)?.version === HIGHEST_VERSION)) {
+      return { value: 'Yes', status: 'green' as FlagStatus }
     }
 
-    return 'No'
+    if (props.store.networks.some((s) => props.store.status(s.chainId)?.version === HIGHEST_VERSION)) {
+      return { value: 'Partially', status: 'yellow' as FlagStatus }
+    }
+
+    return { value: 'No', status: 'red' as FlagStatus }
   }
 
   const commonLatestImageHash = () => {
-    if (props.status.length === 0) {
-      return ''
+    const loading = props.store.networks.some((n) => props.store.loading(n.chainId))
+    if (loading) {
+      return {}
+    }
+
+    if (someFailed()) {
+      return { value: 'Unknown', status: 'red' as FlagStatus }
     }
 
     // Compute how many different image hashes we have
-    const imageHashes = new Set(props.status.map((s) => s.imageHash))
+    const imageHashes = new Set(props.store.networks.map((s) => props.store.status(s.chainId)?.imageHash))
     if (imageHashes.size === 1) {
-      return imageHashes.values().next().value as string
+      return { value: imageHashes.values().next().value as string, status: 'green' as FlagStatus }
     }
 
-    return `Multiple (${imageHashes.size})`
+    return { value: `Multiple (${imageHashes.size})`, status: 'red' as FlagStatus }
   }
 
   return <Box sx={{ flexGrow: 1 }}>
      <Grid container spacing={2}>
-      <Grid item>
-        <Flag label="Address" value={props.address} />
-      </Grid>
-      <Show when={props.status.length > 0}>
-        <Grid item>
-          <Flag label="Initial image hash" value={props.status[0].original.imageHash} />
-        </Grid>
-        <Grid item>
-          <Flag label="Initial version" value={initialVersion()!.toString()} status={initialVersion() === 1 ? 'yellow' : 'green'} />
-        </Grid>
-        <Grid item>
-          <Flag label="Fully migrated" value={fullyMigrated()} status={fullyMigrated() === 'Yes' ? 'green' : fullyMigrated() === 'No' ? 'red' : 'yellow'} />
-        </Grid>
-        <Grid item>
-          <Flag label="Last image hash" value={commonLatestImageHash()} status={commonLatestImageHash().includes('Multiple') ? 'red' : 'green'} />
-        </Grid>
-      </Show>
+      <Flag grid label="Address" value={props.store.address} />
+      <Flag grid label="Initial image hash" {...initialImageHash()} />
+      <Flag grid label="Initial version" {...initialVersion()} />
+      <Flag grid label="Fully migrated" {...fullyMigrated()} />
+      <Flag grid label="Last image hash" {...commonLatestImageHash()} />
     </Grid>
   </Box>
 }
 
-export const AccountView: Component = () => {  
+export const AccountView: Component<{ address: string }> = (props) => {
+  const store = createStatusStore(props.address)
+
+  const loading = () => store.networks.every((n) => store.loading(n.chainId))
+
   return (
     <>
-      {addressLoading() && <LinearProgress />}
-      <Show when={status()}>
-        <h2>Account</h2>
-        <GlobalAccountView address={input()!} status={status()!} />
+      <Show when={!loading()} fallback={<LinearProgress />}>
+        <h2>Sequence account</h2>
+        <GlobalAccountView store={store} />
         <br/>
-        <NetworksView {...status()!} />
+        <NetworksView store={store}/>
       </Show>
     </>
   );

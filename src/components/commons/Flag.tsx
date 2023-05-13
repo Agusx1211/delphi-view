@@ -1,21 +1,23 @@
 import { Component, Show } from "solid-js";
-import { Card, CardContent, Typography, Box } from "@suid/material"
+import { Card, CardContent, Typography, Box, Skeleton, Grid } from "@suid/material"
+
+export type FlagStatus = 'green' | 'yellow' | 'red';
 
 type FlagProps = {
+  grid?: boolean;
   label: string;
-  value: string;
-  status?: 'green' | 'yellow' | 'red';
+  value?: string;
+  status?: FlagStatus;
 }
 
 export const Flag: Component<FlagProps> = (props) => {
-
   const statusColor = {
     green: '#4CAF50', // Material green 500
     yellow: '#FFEB3B', // Material yellow 500
     red: '#F44336', // Material red 500
   }
 
-  return <Card sx={{ minWidth: 275 }}>
+  const content = <Card sx={{ minWidth: 275 }}>
     <CardContent sx={{ textAlign: 'left' }}>
       <Box sx={{ display: 'flex', alignItems: 'center' }}>
         <Show when={props.status}>
@@ -25,9 +27,19 @@ export const Flag: Component<FlagProps> = (props) => {
           {props.label}
         </Typography>
       </Box>
-      <Typography variant="body1">
-        {props.value}
-      </Typography>
+      <Show when={props.value} fallback={<Skeleton variant="text" />}>
+        <Typography style={{ }} variant="code">
+          {props.value}
+        </Typography>
+      </Show>
     </CardContent>
   </Card>
+
+  if (props.grid) {
+    return <Grid item>
+      {content}
+    </Grid>
+  }
+
+  return content
 }

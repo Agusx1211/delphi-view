@@ -55,6 +55,9 @@ dependencies:
   '@suid/material':
     specifier: ^0.12.1
     version: 0.12.1(solid-js@1.6.10)
+  '@suid/system':
+    specifier: ^0.10.1
+    version: 0.10.1(solid-js@1.6.10)
   ethers:
     specifier: ^5.7.2
     version: 5.7.2
