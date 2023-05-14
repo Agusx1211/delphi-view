@@ -12,6 +12,9 @@ DelphiView is a powerful developer tool built for Sequence wallets. It provides 
 
 * Decode Sequence signatures: DelphiView can decode and display Sequence signatures, providing additional insights into your transactions.
 
+## Latest Release
+[View the latest release here](https://ipfs.io/ipfs/QmQjd1PkT8m5epvQmKrN9zRGff3LDMybQ7RbgVSx9XdHdJ)
+
 ## Example Views
 
 ![DelphiView Screenshot](/imgs/demo.png)
