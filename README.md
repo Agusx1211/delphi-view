@@ -1,34 +1,55 @@
-## Usage
+# DelphiView
 
-Those templates dependencies are maintained via [pnpm](https://pnpm.io) via `pnpm up -Lri`.
+![DelphiView Logo](/imgs/logo2.png)
 
-This is the reason you see a `pnpm-lock.yaml`. That being said, any package manager will work. This file can be safely be removed once you clone a template.
+DelphiView is a powerful developer tool built for Sequence wallets. It provides a comprehensive view of any Sequence account, allowing you to quickly and easily access important information such as migrations, presigned configurations, and deployment status.
 
-```bash
-$ npm install # or pnpm install or yarn install
+## Key Features
+
+* View account information: Simply input the address to get a detailed breakdown of the account, including initial and last image hashes, version details, deployment status across various networks, and more.
+
+* Fetch and view configurations: Easily fetch the configuration of any imageHash and view all its values in a clean, tree-like structure.
+
+* Decode Sequence signatures: DelphiView can decode and display Sequence signatures, providing additional insights into your transactions.
+
+## Example Views
+
+![DelphiView Screenshot](/imgs/demo.png)
+
+Refer to the initial query for detailed examples of what DelphiView can display.
+
+## Installation
+
+This project uses pnpm for dependency management. 
+
+1. Clone the repository
+```
+git clone https://github.com/your-github-username/delphiview.git
 ```
 
-### Learn more on the [Solid Website](https://solidjs.com) and come chat with us on our [Discord](https://discord.com/invite/solidjs)
+2. Navigate to the cloned repository
+```
+cd delphiview
+```
 
-## Available Scripts
+3. Install the dependencies
+```
+pnpm install
+```
 
-In the project directory, you can run:
+## Usage
 
-### `npm dev` or `npm start`
+After installation, you can run the application locally with:
+```
+pnpm start
+```
 
-Runs the app in the development mode.<br>
-Open [http://localhost:3000](http://localhost:3000) to view it in the browser.
+Then open your web browser to `http://localhost:3000` (or the port specified) to view the application.
 
-The page will reload if you make edits.<br>
+## Contributing
 
-### `npm run build`
+We welcome contributions!
 
-Builds the app for production to the `dist` folder.<br>
-It correctly bundles Solid in production mode and optimizes the build for the best performance.
+## License
 
-The build is minified and the filenames include the hashes.<br>
-Your app is ready to be deployed!
-
-## Deployment
-
-You can deploy the `dist` folder to any static host provider (netlify, surge, now, etc.)
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.

@@ -97,7 +97,9 @@ export const V2UnrecoveredSignatureView: Component<{ node: v2.signature.Unrecove
         <Show when={v2.config.isNode(props.node) ? props.node : undefined} keyed>
           {(node) => <Box pl="1rem">
             <V2UnrecoveredSignatureView node={node.left} background={backgroundChild1()} />
-            <V2UnrecoveredSignatureView node={node.right} background={backgroundChild2()} />
+            <Box pt="0.5rem">
+              <V2UnrecoveredSignatureView node={node.right} background={backgroundChild2()} />
+            </Box>
           </Box>}
         </Show>
         <Show when={v2.config.isSignerLeaf(props.node) ? props.node : undefined} keyed>

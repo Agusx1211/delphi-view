@@ -44,7 +44,7 @@ const [input2, setInput2] = createUrlSyncedStore('input2');
 
 createEffect(() => {
   if (input() && input2() && input() === input2()) {
-    setInput2(undefined)
+    setInput2('')
   }
 })
 

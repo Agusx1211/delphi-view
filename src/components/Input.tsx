@@ -1,5 +1,5 @@
 import { ethers } from "ethers";
-import { Component, Show, useContext } from "solid-js";
+import { Component, Show } from "solid-js";
 import { AccountView } from "./Account";
 import { ImageHashView, mayBeImageHash } from "./ImageHash";
 import { v2 } from "@0xsequence/core";

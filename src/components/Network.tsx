@@ -1,15 +1,18 @@
-import { Component, For, Show, createEffect, useContext } from "solid-js";
+import { Component, For, Show, createEffect, createSignal, useContext } from "solid-js";
 import { Box, Button, Card, CardActions, CardContent, Divider, Grid, LinearProgress, List, ListItem, Skeleton, Typography } from "@suid/material"
 import { AccountStatusStore } from "../stores/AccountStatusStore";
 import { NetworkConfig } from '@0xsequence/network'
 import { Flag } from "./commons/Flag";
 import { HIGHEST_VERSION } from "../stores/ContextStore";
-import { decodeInputAddress, encodeInputAddress, limitString, toUpperFirst } from "../utils";
+import { decodeInputAddress, encodeInputAddress, toUpperFirst } from "../utils";
 
 import ArrowDownward from "@suid/icons-material/ArrowDownward";
 import Circle from "@suid/icons-material/Circle";
 import { ImageHashFlag } from "./commons/ImageHashFlag";
 import { SideContext, inputFor, setInput2, setInputFor } from "../stores/InputStore";
+import { tracker } from "@0xsequence/sessions";
+import RotateLeftIcon from '@suid/icons-material/RotateLeft';
+import { v2 } from "@0xsequence/core";
 
 export const NetworksView: Component<{ store: AccountStatusStore }> = (prop) => {
   const sideContext = useContext(SideContext)
@@ -92,9 +95,26 @@ export const NetworkCardView: Component<{ network: NetworkConfig, store: Account
 }
 
 export const NetworkView: Component<{ store: AccountStatusStore, network: NetworkConfig }> = (props) => {
+  const [configs, setConfigs] = createSignal<Map<string, v2.config.WalletConfig>>()
+
+  const willSkip = (presigned: tracker.PresignedConfigLink) => {
+    const shortPath = props.store.statusShort(props.network.chainId)
+    if (!shortPath) return false
+    return shortPath?.presignedConfigurations.find((l) => l.nextImageHash === presigned.nextImageHash) === undefined
+  }
+
+  const skipSignature = (presigned: tracker.PresignedConfigLink) => {
+    const shortPath = props.store.statusShort(props.network.chainId)
+    if (!shortPath) return
+    const sig = shortPath?.presignedConfigurations.find((l) => l.nextImageHash === presigned.nextImageHash)?.signature
+    if (sig === presigned.signature) return
+    return sig
+  }
+
   createEffect(() => {
-    console.log('status', props.store.status(props.network.chainId))
+    
   })
+
   return <Box sx={{ flexGrow: 1 }}>
     <Show when={props.store.loading(props.network.chainId)}>
       <LinearProgress />
@@ -145,11 +165,18 @@ export const NetworkView: Component<{ store: AccountStatusStore, network: Networ
                   <Show when={i() !== status.presignedConfigurations.length - 1} fallback={<>
                     <Circle fontSize="large" style={{ color: 'green '}} />
                   </>}>
-                    <ArrowDownward fontSize="large" style={{ color: 'gray '}} />
+                    <Show when={!willSkip(c)} fallback={
+                      <RotateLeftIcon style={{ rotate: '220deg', color: 'gray' }} fontSize="large" />
+                    }>
+                      <ArrowDownward fontSize="large" style={{ color: 'orange'}} />
+                    </Show>
                   </Show>
                   <Box sx={{ marginLeft: 2 }}>
                     <Typography sx={{ fontSize: 14 }} color="text.secondary">
-                      {i() !== status.presignedConfigurations.length - 1 ? 'Next image hash' : 'Final image hash'}
+                      {
+                        i() !== status.presignedConfigurations.length - 1 ? 
+                        (willSkip(c) ? 'Skippable next image hash' : 'Next image hash') : 'Final image hash'
+                      }
                     </Typography>
                     <Typography variant="code" noWrap>
                       {c.nextImageHash}
@@ -166,6 +193,19 @@ export const NetworkView: Component<{ store: AccountStatusStore, network: Networ
                     <Typography variant="code" ml='0.5rem'>
                       <a href="#" onClick={() => setInput2(c.signature)}>{"[->]"}</a>
                     </Typography>
+                    <Show when={skipSignature(c)} keyed>
+                      {(ssig) => <>
+                      <Typography sx={{ fontSize: 14 }} color="text.secondary">
+                        Skip signature
+                      </Typography>
+                      <Typography variant="code" style={{ "overflow-wrap": 'break-word'}} flexWrap="wrap">
+                        {ssig}
+                      </Typography>
+                      <Typography variant="code" ml='0.5rem'>
+                        <a href="#" onClick={() => setInput2(ssig)}>{"[->]"}</a>
+                      </Typography>
+                      </>}
+                    </Show>
                   </Box>
                 </Box>
               </ListItem>

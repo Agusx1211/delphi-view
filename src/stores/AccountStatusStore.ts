@@ -13,12 +13,14 @@ export type AccountStatusStore = {
   address: string,
   networks: NetworkConfig[],
   status: (chainId: number) => NetworkAndStatus | undefined,
+  statusShort: (chainId: number) => AccountStatus | undefined,
   error: (chainId: number) => any | undefined,
   loading: (chainId: number) => boolean,
 }
 
 export const createStatusStore = (address: string): AccountStatusStore => {
   const statuses: Record<number, Signal<NetworkAndStatus | undefined>> = {};
+  const statusesShort: Record<number, Signal<NetworkAndStatus | undefined>> = {};
   const errors: Record<number, Signal<any>> = {};
   const loading: Record<number, Signal<boolean>> = {};  
 
@@ -26,6 +28,7 @@ export const createStatusStore = (address: string): AccountStatusStore => {
     statuses[network.chainId] = createSignal<NetworkAndStatus | undefined>();
     errors[network.chainId] = createSignal<any>();
     loading[network.chainId] = createSignal<boolean>(false);
+    statusesShort[network.chainId] = createSignal<NetworkAndStatus | undefined>();
   });
 
   (async () => {
@@ -46,10 +49,15 @@ export const createStatusStore = (address: string): AccountStatusStore => {
           networks: NETWORKS
         });
 
-        const status = await account.status(network.chainId, true);
+        const [status, statusLong] = await Promise.all([
+          account.status(network.chainId, false),
+          account.status(network.chainId, true)
+        ])
+        const resultLong = { ...statusLong, network };
         const result = { ...status, network };
 
-        statuses[network.chainId][1](result);
+        statuses[network.chainId][1](resultLong);
+        statusesShort[network.chainId][1](result);
       } catch (error) {
         errors[network.chainId][1](error);
       }
@@ -62,6 +70,7 @@ export const createStatusStore = (address: string): AccountStatusStore => {
     address,
     networks: NETWORKS,
     status: (chainId: number) => statuses[chainId][0](),
+    statusShort: (chainId: number) => statusesShort[chainId][0](),
     error: (chainId: number) => errors[chainId][0](),
     loading: (chainId: number) => loading[chainId][0]()
   };

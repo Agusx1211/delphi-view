@@ -116,7 +116,9 @@ export const ConfigV2NodeView: Component<{ node: v2.config.Topology, background?
         <Show when={v2.config.isNode(props.node) ? props.node : undefined} keyed>
           {(node) => <Box pl="1rem">
             <ConfigV2NodeView node={node.left} background={backgroundChild1()} />
-            <ConfigV2NodeView node={node.right} background={backgroundChild2()} />
+            <Box pt="0.5rem">
+              <ConfigV2NodeView node={node.right} background={backgroundChild2()} />
+            </Box>
           </Box>}
         </Show>
         <Show when={v2.config.isSignerLeaf(props.node) ? props.node : undefined} keyed>

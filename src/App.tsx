@@ -1,12 +1,10 @@
 import { Component, Show } from 'solid-js';
 
-import logo from './logo.svg';
 import styles from './App.module.css';
 import { Header } from './components/Header';
-import { AccountView } from './components/Account';
-import { SideContext, input, input2, setInput, setInput2 } from './stores/InputStore';
+import { SideContext, input, input2, setInput2 } from './stores/InputStore';
 
-import { Box, Button, Paper, Slide, StyledProps, ThemeProvider, createTheme } from '@suid/material';
+import { Box, Button, StyledProps, ThemeProvider, createTheme } from '@suid/material';
 import { InputView } from './components/Input';
 
 declare module "@suid/material/styles" {
@@ -52,7 +50,7 @@ const App: Component = () => {
             <Header />
             <Box class={styles.ViewContainer}>
               <Box class={styles.ViewBox}>
-                <Box>
+                <Box sx={{ p: '1rem'}}>
                   <SideContext.Provider value={1}>
                     <InputView input={ input()} />
                   </SideContext.Provider>
@@ -60,13 +58,18 @@ const App: Component = () => {
               </Box>
               <Show when={showSide()}>
                 <Box class={`${styles.ViewBox2} ${styles.scrollable}`}>
-                  <Box sx={{ display: "flex" }} justifyContent="space-between">
-                    <Button variant="outlined" sx={{ m: '0.25rem' }} onClick={() => setInput(input2())}>Focus</Button>
-                    <Button variant="outlined" sx={{ m: '0.25rem' }} onClick={() => setInput2("")}>Close</Button>
+                  <Box sx={{ p: '1rem'}}>
+                    <Box sx={{ display: "flex" }} justifyContent="space-between">
+                      <Button variant="outlined" sx={{ m: '0.25rem' }} onClick={() => {
+                        // Open input 2 (as input 1) on a new tab
+                        window.open(`/?input=${input2()}`, '_blank')
+                      }}>Focus</Button>
+                      <Button variant="outlined" sx={{ m: '0.25rem' }} onClick={() => setInput2('')}>Close</Button>
+                    </Box>
+                    <SideContext.Provider value={2}>
+                      <InputView optional input={ input2()} />
+                    </SideContext.Provider>
                   </Box>
-                  <SideContext.Provider value={2}>
-                    <InputView optional input={ input2()} />
-                  </SideContext.Provider>
                 </Box>
               </Show>
             </Box>

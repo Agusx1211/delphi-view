@@ -2,8 +2,8 @@
 
 .App {
   text-align: center;
-  height: 88vh;
-  padding-top: 5rem; /* Adjust this value to match the AppBar's height */
+  height: calc(100vh - 5rem);
+  padding-top: 5rem;
 }
 
 .link {
@@ -18,8 +18,7 @@
 
 .ViewBox {
   flex: 1;
-  overflow: auto; /* Add this if you want the content to scroll when it overflows the box */
-  padding: 1rem;
+  overflow: auto;
   height: 100%;
 }
 
@@ -27,7 +26,6 @@
   flex: 1;
   background-color: gainsboro;
   overflow: auto; /* Add this if you want the content to scroll when it overflows the box */
-  padding: 1rem;
   z-index: 0;
 }
 
