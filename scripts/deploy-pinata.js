@@ -19,25 +19,28 @@ exec('./node_modules/.bin/pinata-cli -u ./dist/', (error, stdout, stderr) => {
     updateReadme(ipfsUrl);
 });
 
-function updateReadme(ipfsUrl) {
-    const readmePath = 'README.md'; // Path to your README file
-    let readmeContent = fs.readFileSync(readmePath, 'utf8');
-    const releaseText = '## Latest Release\n';
+function updateReadme(ipfsHash) {
+  const readmePath = 'README.md'; // Path to your README file
+  let readmeContent = fs.readFileSync(readmePath, 'utf8');
+  const releaseText = 'Latest release on IPFS: ';
 
-    // If README already contains a release link, replace it
-    const releaseIndex = readmeContent.indexOf(releaseText);
-    if (releaseIndex >= 0) {
-        const releasePattern = /\[View the latest release here]\(https:\/\/ipfs\.io\/ipfs\/[^\)]+\)/;
-        if (readmeContent.match(releasePattern)) {
-            readmeContent = readmeContent.replace(releasePattern, `[View the latest release here](${ipfsUrl})`);
-        } else {
-            // If pattern not found, append new link
-            readmeContent = `${readmeContent}\n${releaseText}[View the latest release here](${ipfsUrl})`;
-        }
-    } else {
-        // If the release section is not present, append it
-        readmeContent = `${readmeContent}\n${releaseText}[View the latest release here](${ipfsUrl})`;
-    }
+  // If README already contains a release link, replace it
+  const releaseIndex = readmeContent.indexOf(releaseText);
+  if (releaseIndex >= 0) {
+      const releasePattern = /Latest release on IPFS: \[ipfs:\/\/[^\]]+\]\(https:\/\/cloudflare-ipfs\.com\/ipfs\/[^\)]+\)/;
+      if (readmeContent.match(releasePattern)) {
+          const newReleaseText = `Latest release on IPFS: [ipfs://${ipfsHash}](https://cloudflare-ipfs.com/ipfs/${ipfsHash})`;
+          readmeContent = readmeContent.replace(releasePattern, newReleaseText);
+      } else {
+          // If pattern not found, append new link
+          const newReleaseText = `${releaseText}[ipfs://${ipfsHash}](https://cloudflare-ipfs.com/ipfs/${ipfsHash})`;
+          readmeContent = `${readmeContent}\n${newReleaseText}`;
+      }
+  } else {
+      // If the release section is not present, append it
+      const newReleaseText = `${releaseText}[ipfs://${ipfsHash}](https://cloudflare-ipfs.com/ipfs/${ipfsHash})`;
+      readmeContent = `${readmeContent}\n${newReleaseText}`;
+  }
 
-    fs.writeFileSync(readmePath, readmeContent, 'utf8');
+  fs.writeFileSync(readmePath, readmeContent, 'utf8');
 }
