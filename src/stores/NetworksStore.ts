@@ -53,6 +53,7 @@ export const NETWORKS: NetworkConfig[] = [
   {
     ...networks[ChainId.POLYGON_ZKEVM],
     ...genUrls('polygon-zkevm'),
+    name: 'Pol-ZKEVM'
   },
   {
     ...networks[ChainId.GNOSIS],

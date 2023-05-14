@@ -3,11 +3,16 @@ import { Card, CardContent, Typography, Box, Skeleton, Grid } from "@suid/materi
 
 export type FlagStatus = 'green' | 'yellow' | 'red';
 
-type FlagProps = {
+export type FlagProps = {
   grid?: boolean;
   label: string;
   value?: string;
   status?: FlagStatus;
+
+  link?: {
+    text: string,
+    onClick: (props: FlagProps) => void,
+  }
 }
 
 export const Flag: Component<FlagProps> = (props) => {
@@ -26,6 +31,11 @@ export const Flag: Component<FlagProps> = (props) => {
         <Typography variant="h6" component="div">
           {props.label}
         </Typography>
+        <Show when={props.link} keyed>
+          {(link) => <Typography variant="body2" component="div" sx={{ flexGrow: 1, textAlign: 'right' }}>
+            <a href="#" onClick={() => link.onClick(props)}>{link.text}</a>
+          </Typography>}
+        </Show>
       </Box>
       <Show when={props.value} fallback={<Skeleton variant="text" />}>
         <Typography style={{ }} variant="code">

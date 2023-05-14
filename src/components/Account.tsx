@@ -4,6 +4,7 @@ import { NetworksView } from "./Network";
 import { Flag, FlagStatus } from "./commons/Flag";
 import { HIGHEST_VERSION } from "../stores/ContextStore";
 import { AccountStatusStore, createStatusStore } from "../stores/AccountStatusStore";
+import { ImageHashFlag } from "./commons/ImageHashFlag";
 
 export const GlobalAccountView: Component<{ store: AccountStatusStore }> = (props) => {
   const [someFailed, setSomeFailed] = createSignal(false)
@@ -74,10 +75,10 @@ export const GlobalAccountView: Component<{ store: AccountStatusStore }> = (prop
   return <Box sx={{ flexGrow: 1 }}>
      <Grid container spacing={2}>
       <Flag grid label="Address" value={props.store.address} />
-      <Flag grid label="Initial image hash" {...initialImageHash()} />
+      <ImageHashFlag grid label="Initial image hash" {...initialImageHash()} />
       <Flag grid label="Initial version" {...initialVersion()} />
       <Flag grid label="Fully migrated" {...fullyMigrated()} />
-      <Flag grid label="Last image hash" {...commonLatestImageHash()} />
+      <ImageHashFlag grid label="Last image hash" {...commonLatestImageHash()} />
     </Grid>
   </Box>
 }

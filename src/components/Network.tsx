@@ -1,22 +1,41 @@
-import { Component, For, Show, createEffect, createSignal } from "solid-js";
+import { Component, For, Show, createEffect, useContext } from "solid-js";
 import { Box, Button, Card, CardActions, CardContent, Divider, Grid, LinearProgress, List, ListItem, Skeleton, Typography } from "@suid/material"
 import { AccountStatusStore } from "../stores/AccountStatusStore";
 import { NetworkConfig } from '@0xsequence/network'
 import { Flag } from "./commons/Flag";
 import { HIGHEST_VERSION } from "../stores/ContextStore";
-import { limitString, toUpperFirst } from "../utils";
+import { decodeInputAddress, encodeInputAddress, limitString, toUpperFirst } from "../utils";
 
 import ArrowDownward from "@suid/icons-material/ArrowDownward";
 import Circle from "@suid/icons-material/Circle";
+import { ImageHashFlag } from "./commons/ImageHashFlag";
+import { SideContext, inputFor, setInput2, setInputFor } from "../stores/InputStore";
 
 export const NetworksView: Component<{ store: AccountStatusStore }> = (prop) => {
-  const [selected, setSelected] = createSignal<NetworkConfig | undefined>()
+  const sideContext = useContext(SideContext)
+
+  const selected = () => {
+    const decoded = decodeInputAddress(inputFor(sideContext)())
+    return prop.store.networks.find((n) => n.chainId.toString() === decoded?.selected)
+  }
+
+  const setSelected = (n?: NetworkConfig) => {
+    // Strip the chainId from the input, and add the new one
+    const decoded = decodeInputAddress(inputFor(sideContext)())
+    const encoded = encodeInputAddress(decoded?.address, n?.chainId?.toString())
+    setInputFor(sideContext)(encoded)
+  }
 
   return <Box sx={{ flexGrow: 1 }}>
      <Grid container spacing={2}>
       <For each={prop.store.networks}>{(n) =>
-        <Grid item xs={6} md={2}>
-          <NetworkCardView onExpand={() => setSelected(n)} network={n} store={prop.store} />
+        <Grid item xs={6} md={3}>
+          <NetworkCardView
+            selected={selected()?.chainId === n.chainId}
+            onExpand={() => setSelected(n)}
+            onClose={() => setSelected(undefined)}
+            network={n} store={prop.store}
+            />
         </Grid>
       }</For>
     </Grid>
@@ -26,7 +45,7 @@ export const NetworksView: Component<{ store: AccountStatusStore }> = (prop) => 
   </Box>
 }
 
-export const NetworkCardView: Component<{ network: NetworkConfig, store: AccountStatusStore, onExpand: () => void }> = (props) => {
+export const NetworkCardView: Component<{ network: NetworkConfig, store: AccountStatusStore, selected: boolean, onExpand: () => void, onClose: () => void }> = (props) => {
   return <Card>
     <CardContent sx={{ textAlign: 'left' }}>
       <Typography sx={{ fontSize: 14 }} color="text.secondary" gutterBottom>
@@ -62,8 +81,13 @@ export const NetworkCardView: Component<{ network: NetworkConfig, store: Account
       </Show>
     </CardContent>
     <CardActions>
-        <Button size="small" onClick={() => props.onExpand()}>Expand</Button>
-      </CardActions>
+      <Show when={props.selected}>
+        <Button size="small" onClick={() => props.onClose()}>Close</Button>
+      </Show>
+      <Show when={!props.selected}>
+        <Button size="small" onClick={() => props.onExpand()}>Select</Button>
+      </Show>
+    </CardActions>
   </Card>
 }
 
@@ -84,13 +108,13 @@ export const NetworkView: Component<{ store: AccountStatusStore, network: Networ
       {(status) => <>
         <h3>{toUpperFirst(props.network.name)} details</h3>
         <Grid container spacing={2}>
-          <Flag grid label="Image Hash (final)" value={status.imageHash} />
-          <Flag grid label="Image Hash (onchain)" value={status.onChain.imageHash} />
+          <ImageHashFlag grid label="Image Hash (final)" value={status.imageHash} />
+          <ImageHashFlag grid label="Image Hash (onchain)" value={status.onChain.imageHash} />
           <Flag grid label="Version" value={status.version.toString()} status={status.version === HIGHEST_VERSION ? 'green' : 'yellow'} />
           <Flag grid label="Version (onchain)" value={status.onChain.version.toString()} status={status.onChain.version === HIGHEST_VERSION ? 'green' : 'yellow'} />
           <Flag grid label="Fully migrated" value={status.fullyMigrated ? 'Yes' : 'No'} status={status.fullyMigrated ? 'green' : 'red'} />
           <Flag grid label="Deployed" value={status.onChain.deployed ? 'Yes' : 'No'} status={status.onChain.deployed ? 'green' : 'red'} />
-          <Flag grid label="Can onchain validate" value={status.canOnchainValidate ? 'Yes' : 'No'} status={status.canOnchainValidate ? 'green' : 'red'} />
+          <Flag grid label="Can onchain validate (v2)" value={status.canOnchainValidate ? 'Yes' : 'No'} status={status.canOnchainValidate ? 'green' : 'red'} />
           <Flag grid label="Checkpoint (lazy)" value={status.checkpoint.toString()} />
         </Grid>
 
@@ -104,8 +128,11 @@ export const NetworkView: Component<{ store: AccountStatusStore, network: Networ
                 <Typography sx={{ fontSize: 14 }} color="text.secondary" gutterBottom>
                   {status.presignedConfigurations.length === 0 ? 'Initial Image hash' : 'Image hash'}
                 </Typography>
-                <Typography variant="body2" noWrap>
+                <Typography variant="code" noWrap>
                   {status.onChain.imageHash}
+                </Typography>
+                <Typography variant="code" ml='0.5rem'>
+                  <a href="#" onClick={() => setInput2(status.onChain.imageHash)}>{"[->]"}</a>
                 </Typography>
               </Box>
             </Box>
@@ -127,11 +154,17 @@ export const NetworkView: Component<{ store: AccountStatusStore, network: Networ
                     <Typography variant="code" noWrap>
                       {c.nextImageHash}
                     </Typography>
+                    <Typography variant="code" ml='0.5rem'>
+                      <a href="#" onClick={() => setInput2(c.nextImageHash)}>{"[->]"}</a>
+                    </Typography>
                     <Typography sx={{ fontSize: 14 }} color="text.secondary">
                       Signature
                     </Typography>
                     <Typography variant="code" style={{ "overflow-wrap": 'break-word'}} flexWrap="wrap">
                       {c.signature}
+                    </Typography>
+                    <Typography variant="code" ml='0.5rem'>
+                      <a href="#" onClick={() => setInput2(c.signature)}>{"[->]"}</a>
                     </Typography>
                   </Box>
                 </Box>
@@ -144,4 +177,3 @@ export const NetworkView: Component<{ store: AccountStatusStore, network: Networ
     </Show>
   </Box>
 }
-
