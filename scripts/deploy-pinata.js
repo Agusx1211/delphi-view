@@ -15,8 +15,7 @@ exec('./node_modules/.bin/pinata-cli -u ./dist/', (error, stdout, stderr) => {
     const stdoutLines = stdout.split('\n');
     const pinataOutputLine = stdoutLines.find(line => line.includes('IpfsHash'));
     const ipfsHash = pinataOutputLine.split("\'")[1].split("\'")[0]
-    const ipfsUrl = `https://ipfs.io/ipfs/${ipfsHash}`;
-    updateReadme(ipfsUrl);
+    updateReadme(ipfsHash);
 });
 
 function updateReadme(ipfsHash) {
