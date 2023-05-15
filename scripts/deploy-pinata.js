@@ -26,18 +26,18 @@ function updateReadme(ipfsHash) {
   // If README already contains a release link, replace it
   const releaseIndex = readmeContent.indexOf(releaseText);
   if (releaseIndex >= 0) {
-      const releasePattern = /Latest release on IPFS: \[ipfs:\/\/[^\]]+\]\(https:\/\/cloudflare-ipfs\.com\/ipfs\/[^\)]+\)/;
+      const releasePattern = /Latest release on IPFS: \[ipfs:\/\/[^\]]+\]\(https:\/\/cf-ipfs\.com\/ipfs\/[^\)]+\)/;
       if (readmeContent.match(releasePattern)) {
-          const newReleaseText = `Latest release on IPFS: [ipfs://${ipfsHash}](https://cloudflare-ipfs.com/ipfs/${ipfsHash})`;
+          const newReleaseText = `Latest release on IPFS: [ipfs://${ipfsHash}](https://cf-ipfs.com/ipfs/${ipfsHash})`;
           readmeContent = readmeContent.replace(releasePattern, newReleaseText);
       } else {
           // If pattern not found, append new link
-          const newReleaseText = `${releaseText}[ipfs://${ipfsHash}](https://cloudflare-ipfs.com/ipfs/${ipfsHash})`;
+          const newReleaseText = `${releaseText}[ipfs://${ipfsHash}](https://cf-ipfs.com/ipfs/${ipfsHash})`;
           readmeContent = `${readmeContent}\n${newReleaseText}`;
       }
   } else {
       // If the release section is not present, append it
-      const newReleaseText = `${releaseText}[ipfs://${ipfsHash}](https://cloudflare-ipfs.com/ipfs/${ipfsHash})`;
+      const newReleaseText = `${releaseText}[ipfs://${ipfsHash}](https://cf-ipfs.com/ipfs/${ipfsHash})`;
       readmeContent = `${readmeContent}\n${newReleaseText}`;
   }
 
