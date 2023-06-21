@@ -5,7 +5,7 @@ import { SEQUENCE_CONTEXT } from './ContextStore'
 
 // export const TRACKER = new trackers.remote.RemoteConfigTracker('https://fun-sessions.sequence.app')
 
-export const REMOTE_TRACKER = new trackers.remote.RemoteConfigTracker('https://fun-sessions.sequence.app')
+export const REMOTE_TRACKER = new trackers.remote.RemoteConfigTracker('https://sessions.sequence.app')
 
 export const TRACKER = new trackers.CachedTracker(
   REMOTE_TRACKER,
