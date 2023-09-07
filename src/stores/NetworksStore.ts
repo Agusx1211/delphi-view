@@ -1,9 +1,8 @@
+import { NetworkConfig, ChainId, networks } from '@0xsequence/network'
 
-import { NetworkConfig, isNetworkConfig, ChainId, networks, findNetworkConfig } from '@0xsequence/network'
-
-export const indexerURL = (network: string) => `https://fun-${network}-relayer.sequence.app`
-export const relayerURL = (network: string) => `https://dev-${network}-indexer.sequence.app`
-export const nodesURL = (network: string) => `https://fun-nodes.sequence.app/${network}`
+export const indexerURL = (network: string) => `https://${network}-relayer.sequence.app`
+export const relayerURL = (network: string) => `https://${network}-indexer.sequence.app`
+export const nodesURL = (network: string) => `https://nodes.sequence.app/${network}`
 
 const genUrls = (network: string) => {
   const rpcUrl = nodesURL(network)
