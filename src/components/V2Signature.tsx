@@ -72,6 +72,10 @@ export const V2UnrecoveredSignatureView: Component<{ node: v2.signature.Unrecove
       return { label: 'Subdigest leaf', color: 'purple' }
     }
 
+    if (v2.config.isNestedLeaf(props.node)) {
+      return { label: 'Nested leaf', color: 'pink' }
+    }
+
     return { label: 'Unknown', color: 'red' }
   }
 
@@ -94,6 +98,15 @@ export const V2UnrecoveredSignatureView: Component<{ node: v2.signature.Unrecove
       <Typography marginLeft='0.5rem' variant="code">{nodeHash()}</Typography>
     </Box>
     <Show when={open()}>
+        <Show when={v2.config.isNestedLeaf(props.node) ? props.node : undefined} keyed>
+          {(node) => <Box pl="1rem">
+            <Typography sx={{ fontSize: 14 }} color="text.secondary">Thershold</Typography>
+            <Typography variant="code">{node.threshold.toString()}</Typography>
+            <Typography sx={{ fontSize: 14 }} color="text.secondary">Weight</Typography>
+            <Typography variant="code">{node.weight.toString()}</Typography>
+            <V2UnrecoveredSignatureView node={node.tree} background={backgroundChild1()} />
+          </Box>}
+        </Show>
         <Show when={v2.config.isNode(props.node) ? props.node : undefined} keyed>
           {(node) => <Box pl="1rem">
             <V2UnrecoveredSignatureView node={node.left} background={backgroundChild1()} />

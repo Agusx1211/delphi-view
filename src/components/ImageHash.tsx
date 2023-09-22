@@ -103,6 +103,10 @@ export const ConfigV2NodeView: Component<{ node: v2.config.Topology, background?
       return { label: 'Signer', color: 'green' }
     }
 
+    if (v2.config.isNestedLeaf(props.node)) {
+      return { label: 'Nested', color: 'purple' }
+    }
+
     return { label: 'Unknown', color: 'red' }
   }
 
@@ -129,6 +133,17 @@ export const ConfigV2NodeView: Component<{ node: v2.config.Topology, background?
             <Typography variant="code">{sleaf.weight.toString()}</Typography>
             <Typography sx={{ fontSize: 14 }} color="text.secondary">Address</Typography>
             <Typography variant="code">{sleaf.address}</Typography>
+          </Box>}
+        </Show>
+        <Show when={v2.config.isNestedLeaf(props.node) ? props.node : undefined} keyed>
+          {(sleaf) => <Box marginLeft="1.5rem">
+            <Typography sx={{ fontSize: 14 }} color="text.secondary">Thershold</Typography>
+            <Typography variant="code">{sleaf.threshold.toString()}</Typography>
+            <Typography sx={{ fontSize: 14 }} color="text.secondary">Weight</Typography>
+            <Typography variant="code">{sleaf.weight.toString()}</Typography>
+            <Box pt="0.5rem">
+              <ConfigV2NodeView node={sleaf.tree} background={backgroundChild2()} />
+            </Box>
           </Box>}
         </Show>
     </Show>

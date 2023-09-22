@@ -7,11 +7,14 @@
     "dev": "vite",
     "build": "vite build",
     "serve": "vite preview",
-    "deploy": "vite build && node scripts/deploy-pinata.js"
+    "predeploy": "gh-pages -d dist",
+    "deploy": "echo 'ok'"
   },
+  "homepage": "https://agusx1211.github.io/delphi-view",
   "license": "MIT",
   "devDependencies": {
     "@suid/vite-plugin": "^0.1.3",
+    "gh-pages": "^6.0.0",
     "pinata-upload-cli": "^1.1.0",
     "typescript": "^4.9.5",
     "vite": "^4.1.1",
