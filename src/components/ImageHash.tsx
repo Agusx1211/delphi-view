@@ -107,6 +107,10 @@ export const ConfigV2NodeView: Component<{ node: v2.config.Topology, background?
       return { label: 'Nested', color: 'purple' }
     }
 
+    if (v2.config.isSubdigestLeaf(props.node)) {
+      return { label: 'Subdigest', color: 'blue' }
+    }
+
     return { label: 'Unknown', color: 'red' }
   }
 
@@ -144,6 +148,12 @@ export const ConfigV2NodeView: Component<{ node: v2.config.Topology, background?
             <Box pt="0.5rem">
               <ConfigV2NodeView node={sleaf.tree} background={backgroundChild2()} />
             </Box>
+          </Box>}
+        </Show>
+        <Show when={v2.config.isSubdigestLeaf(props.node) ? props.node : undefined} keyed>
+          {(sleaf) => <Box marginLeft="1.5rem">
+            <Typography sx={{ fontSize: 14 }} color="text.secondary">Subdigest</Typography>
+            <Typography variant="code">{sleaf.subdigest}</Typography>
           </Box>}
         </Show>
     </Show>
