@@ -59,16 +59,24 @@ export const NETWORKS: NetworkConfig[] = [
     ...genUrls('gnosis'),
   },
   {
-    ...networks[ChainId.GOERLI],
-    ...genUrls('goerli'),
-  },
-  {
     ...networks[ChainId.POLYGON_MUMBAI],
     ...genUrls('mumbai'),
   },
   {
     ...networks[ChainId.BSC_TESTNET],
     ...genUrls('bsc-testnet'),
+  },
+  {
+    ...networks[ChainId.BASE],
+    ...genUrls('base'),
+  },
+  {
+    ...networks[ChainId.HOMEVERSE],
+    ...genUrls('homeverse'),
+  },
+  {
+    ...networks[ChainId.HOMEVERSE_TESTNET],
+    ...genUrls('homeverse-testnet'),
   },
   {
     ...networks[ChainId.AVALANCHE_TESTNET],
