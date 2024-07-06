@@ -1,21 +1,25 @@
 import { v2 } from "@0xsequence/core";
 import { Box, Grid, Paper, Typography } from "@suid/material";
-import { Component, Show, createEffect, createSignal } from "solid-js";
+import { Component, Show, createSignal } from "solid-js";
 import { Flag } from "./commons/Flag";
 import { backgroundDistinctFrom } from "../utils";
 import { nameGenerator } from "../deviceNames";
 import { setInput2 } from "../stores/InputStore";
 import { ethers } from "ethers";
 
-export const V2SignatureView: Component<{ signature: v2.signature.UnrecoveredSignature }> = (props) => {
+export const V2SignatureView: Component<{ signature: v2.signature.UnrecoveredSignature | v2.signature.UnrecoveredChainedSignature }> = (props) => {
   const sigType = () => {
     switch (props.signature.type) {
-      case v2.signature.SignatureType.Chained: return 'Chained'
-      case v2.signature.SignatureType.Legacy: return 'Legacy'
-      case v2.signature.SignatureType.NoChainIdDynamic: return 'No ChainId'
-      case v2.signature.SignatureType.Dynamic: return 'Dynamic'
-      default: return 'Unknown'
+      case v2.signature.SignatureType.Chained: return 'Chained';
+      case v2.signature.SignatureType.Legacy: return 'Legacy';
+      case v2.signature.SignatureType.NoChainIdDynamic: return 'No ChainId';
+      case v2.signature.SignatureType.Dynamic: return 'Dynamic';
+      default: return 'Unknown';
     }
+  }
+
+  const isChainedSignature = (signature: v2.signature.UnrecoveredSignature | v2.signature.UnrecoveredChainedSignature): signature is v2.signature.UnrecoveredChainedSignature => {
+    return 'suffix' in signature;
   }
 
   return <>
@@ -32,6 +36,14 @@ export const V2SignatureView: Component<{ signature: v2.signature.UnrecoveredSig
         </Paper>
       </Grid>
     </Grid>
+
+    {isChainedSignature(props.signature) && props.signature.suffix.length > 0 && (
+        <>
+          {props.signature.suffix.map((suffixSig) => (
+              <V2SignatureView signature={suffixSig} />
+          ))}
+        </>
+      )}
   </>
 }
 

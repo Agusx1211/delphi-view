@@ -8,7 +8,6 @@ import { ethers } from "ethers"
 import { backgroundDistinctFrom } from "../utils"
 
 export function mayBeImageHash(value: string): boolean {
-  console.log('mayBeImageHash', value)
   try {
     // 0x74e2070bd4d00c904ccaf6028ff89edebae5327fb6dbde77c9a1319f2d29b972
     return value.startsWith('0x') && value.length === 66
