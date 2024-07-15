@@ -7,6 +7,11 @@ import { SideContext, input, input2, setInput2 } from './stores/InputStore';
 import { Box, Button, StyledProps, ThemeProvider, createTheme } from '@suid/material';
 import { InputView } from './components/Input';
 
+import wagmi from '@web3-onboard/wagmi'
+import { init, useOnboard } from '@web3-onboard/solid'
+import injectedModule from '@web3-onboard/injected-wallets'
+import { NETWORKS } from "./stores/NetworksStore";
+
 declare module "@suid/material/styles" {
   interface TypographyVariants {
     code: StyledProps;
@@ -41,18 +46,36 @@ const customTheme = createTheme({
   }
 });
 
+const injected = injectedModule()
+
+const onboard = init({
+  wagmi,
+  wallets: [injected],
+  chains: NETWORKS.sort((a, b) => a.chainId - b.chainId).map((n) => {
+    return {
+      id: n.chainId,
+      label: n.name,
+      rpcUrl: n.rpcUrl
+    }
+  }),
+  accountCenter: {desktop: {enabled: false}, mobile: {enabled: false}},
+  connect: {autoConnectLastWallet: true}
+})
+
 const App: Component = () => {
+  const { connectWallet, connectedWallet, getChain } = useOnboard()
   const showSide = () => input2() !== '' && input2() !== undefined
+
   return (
     <>
       <ThemeProvider theme={customTheme}>
           <div class={styles.App}>
-            <Header />
+            <Header wallet={connectedWallet()} connectWallet={connectWallet} />
             <Box class={styles.ViewContainer}>
               <Box class={styles.ViewBox}>
                 <Box sx={{ p: '1rem'}}>
                   <SideContext.Provider value={1}>
-                    <InputView input={ input()} />
+                    <InputView getChain={getChain} onboard={onboard} wallet={connectedWallet()} input={ input()} />
                   </SideContext.Provider>
                 </Box>
               </Box>
@@ -67,7 +90,7 @@ const App: Component = () => {
                       <Button variant="outlined" sx={{ m: '0.25rem' }} onClick={() => setInput2('')}>Close</Button>
                     </Box>
                     <SideContext.Provider value={2}>
-                      <InputView optional input={ input2()} />
+                      <InputView getChain={getChain} onboard={onboard} optional wallet={connectedWallet()} input={ input2()} />
                     </SideContext.Provider>
                   </Box>
                 </Box>

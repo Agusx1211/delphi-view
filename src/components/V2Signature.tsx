@@ -23,8 +23,7 @@ export const V2SignatureView: Component<{ signature: v2.signature.UnrecoveredSig
   }
 
   return <>
-    <h2>Signature</h2>
-    <Grid container spacing={2}>
+    <Grid container spacing={2} sx={{marginBottom: '40px'}}>
       <Flag grid label="Version" value={props.signature.version.toString()} />
       <Flag grid label="Type" value={sigType()} />
       <Grid item width="100%">

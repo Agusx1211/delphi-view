@@ -19,14 +19,29 @@ const TransactionView: Component<{
   tx: commons.transaction.TransactionEncoded;
 }> = (props) => {
   const decodeData = (calldata: string) => {
+    let parsedTx = undefined
     try {
       const mainModuleUpgradableInterface = new ethers.utils.Interface(
         walletContracts.mainModuleUpgradable.abi
       );
-      return mainModuleUpgradableInterface.parseTransaction({ data: calldata });
-    } catch {}
+      parsedTx = mainModuleUpgradableInterface.parseTransaction({ data: calldata });
+    } catch {};
 
-    return undefined;
+    try {
+      const mainModuleInterface = new ethers.utils.Interface(
+        walletContracts.mainModule.abi
+      );
+      parsedTx = mainModuleInterface.parseTransaction({ data: calldata });
+    } catch {};
+
+    try {
+      const walletFactoryInterface = new ethers.utils.Interface(
+        walletContracts.factory.abi
+      );
+      parsedTx = walletFactoryInterface.parseTransaction({ data: calldata });
+    } catch {};
+
+    return parsedTx;
   };
 
   const parsedTx = decodeData(ethers.utils.hexValue(props.tx.data));
@@ -51,7 +66,6 @@ const TransactionView: Component<{
                 value: ethers.utils.formatUnits(props.tx.value, "wei"),
               },
             ].map((item) => (
-              <ListItem disablePadding disableGutters>
                 <ListItemText
                   primary={
                     <Typography sx={{ fontSize: 12, color: "text.secondary" }}>
@@ -62,45 +76,41 @@ const TransactionView: Component<{
                     </Typography>
                   }
                 />
-              </ListItem>
             ))}
             {parsedTx ? (
-              <ListItem disablePadding disableGutters>
-                <Card
-                  sx={{
-                    borderRadius: "5px",
-                    backgroundColor: "#E0E0F8",
-                    padding: "5px",
-                  }}
-                >
-                  <CardContent sx={{ padding: "5px" }}>
-                    <Typography
-                      variant="code"
-                      sx={{ fontSize: 12, color: "text.secondary" }}
-                    >
-                      {parsedTx.signature}
-                    </Typography>
-                    <List disablePadding>
-                      {parsedTx.args.map((item) => (
-                        <ListItem disablePadding disableGutters>
-                          <ListItemText
-                            primary={
-                              <Typography
-                                sx={{ fontSize: 12, color: "text.secondary" }}
-                                variant="code"
-                              >
-                                {item}
-                              </Typography>
-                            }
-                          />
-                        </ListItem>
-                      ))}
-                    </List>
-                  </CardContent>
-                </Card>
-              </ListItem>
+              parsedTx.name === "execute" ? <CallDataView tx={parsedTx} /> : <ListItem disablePadding>
+              <Card
+                sx={{
+                  borderRadius: "5px",
+                  backgroundColor: "#E0E0F8",
+                  padding: "5px",
+                }}
+              >
+                <CardContent sx={{ padding: "5px" }}>
+                  <Typography
+                    variant="code"
+                    sx={{ fontSize: 12, fontWeight: "bold", color: "text.secondary" }}
+                  >
+                    {parsedTx.signature}
+                  </Typography>
+                  <List disablePadding>
+                    {parsedTx.args.map((item) => (
+                        <ListItemText
+                          primary={
+                            <Typography
+                              sx={{ fontSize: 12, color: "text.secondary" }}
+                              variant="code"
+                            >
+                              {item}
+                            </Typography>
+                          }
+                        />
+                    ))}
+                  </List>
+                </CardContent>
+              </Card>
+            </ListItem>
             ) : (
-              <ListItem disablePadding disableGutters>
                 <ListItemText
                   primary={
                     <Typography sx={{ fontSize: 12, color: "text.secondary" }}>
@@ -111,7 +121,6 @@ const TransactionView: Component<{
                     </Typography>
                   }
                 />
-              </ListItem>
             )}
           </List>
         </CardContent>
@@ -127,8 +136,6 @@ export const CallDataView: Component<{
   const decodedNonce = commons.transaction.decodeNonce(nonce);
 
   return (
-    <>
-      <h2>Calldata</h2>
       <Box sx={{ padding: "10px", textAlign: "left" }}>
         <Paper
           sx={{ borderRadius: "5px", padding: "15px", marginBottom: "30px" }}
@@ -172,11 +179,10 @@ export const CallDataView: Component<{
           <Typography sx={{ fontSize: 12, color: "text.secondary" }}>
             <Typography variant="code">{signature}</Typography>
           </Typography>
-          <Link sx={{ fontSize: 12 }} href={`/?input=${signature}`}>
+          {signature !== "0x" && <Link sx={{ fontSize: 12 }} href={`${location.pathname}?input=${signature}`}>
             View Details
-          </Link>
+          </Link>}
         </Paper>
       </Box>
-    </>
   );
 };

@@ -1,9 +1,12 @@
-import { AppBar, Toolbar, Typography, TextField, Grid, Paper, InputBase } from "@suid/material";
+import { AppBar, Toolbar, Typography, Paper, InputBase, Button, Box } from "@suid/material";
 import { Component } from "solid-js";
 import logo from "../logo.svg";
 import { input, setInput } from "../stores/InputStore";
+import { ConnectOptions, WalletState } from "@web3-onboard/solid";
 
-export const Header: Component = () => {
+export const Header: Component<{
+  wallet: WalletState | null, connectWallet: (options?: ConnectOptions) => Promise<void>;
+}> = (props) => {
   return (
     <AppBar color="primary" position="fixed" elevation={2}>
       <Toolbar>
@@ -23,6 +26,9 @@ export const Header: Component = () => {
             onChange={(e) => setInput(e.currentTarget.value)}
           />
         </Paper>
+        <Box sx={{marginLeft: "auto", marginRight: "16px"}}>
+        {props.wallet ? <Typography>{`${props.wallet.accounts[0].address.slice(0, 5)}.....${props.wallet.accounts[0].address.slice(37)}`}</Typography>  : <Button onClick={() => props.connectWallet({autoSelect: {label: 'MetaMask', disableModals: true}})} sx={{ bgcolor: "#ffffff", textTransform: 'none', '&:hover': { bgcolor: "#caddff" } }}>Connect Wallet</Button>}
+        </Box>
       </Toolbar>
     </AppBar>
   );

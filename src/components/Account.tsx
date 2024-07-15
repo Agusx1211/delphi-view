@@ -5,6 +5,7 @@ import { Flag, FlagStatus } from "./commons/Flag";
 import { HIGHEST_VERSION } from "../stores/ContextStore";
 import { AccountStatusStore, createStatusStore } from "../stores/AccountStatusStore";
 import { ImageHashFlag } from "./commons/ImageHashFlag";
+import { ConnectedChain, OnboardAPI, WalletState } from "@web3-onboard/solid";
 
 export const GlobalAccountView: Component<{ store: AccountStatusStore }> = (props) => {
   const [someFailed, setSomeFailed] = createSignal(false)
@@ -83,7 +84,7 @@ export const GlobalAccountView: Component<{ store: AccountStatusStore }> = (prop
   </Box>
 }
 
-export const AccountView: Component<{ address: string }> = (props) => {
+export const AccountView: Component<{ address: string, wallet: WalletState | null, onboard: OnboardAPI, getChain: (walletLabel: string) => ConnectedChain | null }> = (props) => {
   const store = createStatusStore(props.address)
 
   const loading = () => store.networks.every((n) => store.loading(n.chainId))
@@ -94,7 +95,7 @@ export const AccountView: Component<{ address: string }> = (props) => {
         <h2>Sequence account</h2>
         <GlobalAccountView store={store} />
         <br/>
-        <NetworksView store={store}/>
+        <NetworksView getChain={props.getChain} onboard={props.onboard} wallet={props.wallet} store={store}/>
       </Show>
     </>
   );

@@ -37,6 +37,9 @@
     "@0xsequence/wallet": "1.9.28",
     "@suid/icons-material": "^0.6.1",
     "@suid/material": "^0.12.1",
+    "@web3-onboard/injected-wallets": "^2.11.1",
+    "@web3-onboard/solid": "^2.1.2",
+    "@web3-onboard/wagmi": "^2.0.1",
     "ethers": "^5.7.2",
     "solid-js": "^1.6.10"
   }

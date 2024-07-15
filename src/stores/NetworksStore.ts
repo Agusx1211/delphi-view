@@ -59,8 +59,8 @@ export const NETWORKS: NetworkConfig[] = [
     ...genUrls('gnosis'),
   },
   {
-    ...networks[ChainId.POLYGON_MUMBAI],
-    ...genUrls('mumbai'),
+    ...networks[ChainId.POLYGON_AMOY],
+    ...genUrls('amoy'),
   },
   {
     ...networks[ChainId.BSC_TESTNET],
@@ -80,12 +80,6 @@ export const NETWORKS: NetworkConfig[] = [
   },
   {
     ...networks[ChainId.AVALANCHE_TESTNET],
-    // TODO: replace with node-gateway once we get it working
-    rpcUrl: 'https://api.avax-test.network/ext/bc/C/rpc',
-    relayer: {
-      url: relayerURL('avalanche-testnet'),
-      provider: { url: 'https://api.avax-test.network/ext/bc/C/rpc' },
-    },
-    indexerUrl: indexerURL('avalanche-testnet')
+    ...genUrls('avalanche-testnet'),
   }
 ]

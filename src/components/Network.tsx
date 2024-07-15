@@ -1,4 +1,4 @@
-import { Component, For, Show, createEffect, createSignal, useContext } from "solid-js";
+import { Component, For, Show, useContext } from "solid-js";
 import { Box, Button, Card, CardActions, CardContent, Divider, Grid, LinearProgress, List, ListItem, Skeleton, Typography } from "@suid/material"
 import { AccountStatusStore } from "../stores/AccountStatusStore";
 import { NetworkConfig } from '@0xsequence/network'
@@ -12,14 +12,18 @@ import { ImageHashFlag } from "./commons/ImageHashFlag";
 import { SideContext, inputFor, setInput2, setInputFor } from "../stores/InputStore";
 import { tracker } from "@0xsequence/sessions";
 import RotateLeftIcon from '@suid/icons-material/RotateLeft';
-import { v2 } from "@0xsequence/core";
+import { commons } from "@0xsequence/core"
+import { sendTransaction, switchChain } from '@web3-onboard/wagmi'
+import { ConnectedChain, OnboardAPI, WalletState } from "@web3-onboard/solid";
+import { accountFor } from "../stores/Sequence";
 
-export const NetworksView: Component<{ store: AccountStatusStore }> = (prop) => {
+
+export const NetworksView: Component<{ wallet: WalletState | null ,store: AccountStatusStore, onboard: OnboardAPI, getChain: (walletLabel: string) => ConnectedChain | null }> = (props) => {
   const sideContext = useContext(SideContext)
 
   const selected = () => {
     const decoded = decodeInputAddress(inputFor(sideContext)())
-    return prop.store.networks.find((n) => n.chainId.toString() === decoded?.selected)
+    return props.store.networks.find((n) => n.chainId.toString() === decoded?.selected)
   }
 
   const setSelected = (n?: NetworkConfig) => {
@@ -31,24 +35,49 @@ export const NetworksView: Component<{ store: AccountStatusStore }> = (prop) => 
 
   return <Box sx={{ flexGrow: 1 }}>
      <Grid container spacing={2}>
-      <For each={prop.store.networks}>{(n) =>
+      <For each={props.store.networks}>{(n) =>
         <Grid item xs={6} md={3}>
           <NetworkCardView
+            getChain={props.getChain}
+            wallet={props.wallet}
+            onboard={props.onboard}
             selected={selected()?.chainId === n.chainId}
             onExpand={() => setSelected(n)}
             onClose={() => setSelected(undefined)}
-            network={n} store={prop.store}
+            network={n} store={props.store}
             />
         </Grid>
       }</For>
     </Grid>
     <Show when={selected()} fallback={<></>} keyed>
-      {(n) => <NetworkView network={n} store={prop.store} />}
+      {(n) => <NetworkView network={n} store={props.store} />}
     </Show>
   </Box>
 }
 
-export const NetworkCardView: Component<{ network: NetworkConfig, store: AccountStatusStore, selected: boolean, onExpand: () => void, onClose: () => void }> = (props) => {
+export const NetworkCardView: Component<{ wallet: WalletState | null ,network: NetworkConfig, store: AccountStatusStore, selected: boolean, onExpand: () => void, onClose: () => void, onboard: OnboardAPI, getChain: (walletLabel: string) => ConnectedChain | null }> = (props) => {
+  const handleDeploy = async () => {
+    const wagmiConfig = props.onboard.state.get().wagmiConfig
+    if (props.wallet && wagmiConfig) {
+      const { wagmiConnector } = props.wallet
+      if (props.network.chainId !== Number(props.getChain(props.wallet.label)?.id)) {
+        await switchChain(wagmiConfig, { connector: wagmiConnector, chainId: props.network.chainId })
+        return
+      }
+      const account = accountFor({address: props.store.address})
+      const status = props.store.status(props.network.chainId)
+      if (status) {
+        const decorated = await account.buildBootstrapTransactions(status, props.network.chainId)
+        const encoded = commons.transaction.encodeBundleExecData(decorated)
+        await sendTransaction(wagmiConfig, {
+          chainId: props.network.chainId,
+          to: decorated.entrypoint as `0x${string}`,
+          data: encoded as `0x${string}`,
+        })
+      }
+    }
+  }
+  
   return <Card>
     <CardContent sx={{ textAlign: 'left' }}>
       <Typography sx={{ fontSize: 14 }} color="text.secondary" gutterBottom>
@@ -80,6 +109,7 @@ export const NetworkCardView: Component<{ network: NetworkConfig, store: Account
           <Typography variant="body2">
             {status.onChain.deployed ? 'Yes' : 'No'}
           </Typography>
+          <Button disabled={status.onChain.deployed} onClick={handleDeploy} size="small">Deploy</Button>
         </>}
       </Show>
     </CardContent>
@@ -95,8 +125,6 @@ export const NetworkCardView: Component<{ network: NetworkConfig, store: Account
 }
 
 export const NetworkView: Component<{ store: AccountStatusStore, network: NetworkConfig }> = (props) => {
-  const [configs, setConfigs] = createSignal<Map<string, v2.config.WalletConfig>>()
-
   const willSkip = (presigned: tracker.PresignedConfigLink) => {
     const shortPath = props.store.statusShort(props.network.chainId)
     if (!shortPath) return false
@@ -110,10 +138,6 @@ export const NetworkView: Component<{ store: AccountStatusStore, network: Networ
     if (sig === presigned.signature) return
     return sig
   }
-
-  createEffect(() => {
-    
-  })
 
   return <Box sx={{ flexGrow: 1 }}>
     <Show when={props.store.loading(props.network.chainId)}>
