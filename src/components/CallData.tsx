@@ -158,6 +158,12 @@ export const CallDataView: Component<{
             Nonce
           </Typography>
           <Typography sx={{ fontSize: 12, color: "text.secondary" }}>
+            raw:{" "}
+            <Typography variant="code" component="span">
+              {ethers.utils.formatUnits(nonce, "wei")}
+            </Typography>
+          </Typography>
+          <Typography sx={{ fontSize: 12, color: "text.secondary" }}>
             space:{" "}
             <Typography variant="code" component="span">
               {ethers.utils.formatUnits(decodedNonce[0], "wei")}

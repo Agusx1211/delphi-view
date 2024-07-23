@@ -26,6 +26,10 @@ export const NETWORKS: NetworkConfig[] = [
     isDefaultChain: true
   },
   {
+    ...networks[ChainId.SEPOLIA],
+    ...genUrls('sepolia'),
+  },
+  {
     ...networks[ChainId.POLYGON],
     ...genUrls('polygon'),
   },
