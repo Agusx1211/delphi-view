@@ -50,6 +50,10 @@ export const NETWORKS: NetworkConfig[] = [
     ...genUrls('arbitrum-nova'),
   },
   {
+    ...networks[ChainId.ARBITRUM_SEPOLIA],
+    ...genUrls('arbitrum-sepolia'),
+  },
+  {
     ...networks[ChainId.OPTIMISM],
     ...genUrls('optimism'),
   },

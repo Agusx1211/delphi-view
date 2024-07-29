@@ -11,23 +11,35 @@ import {
   TextField,
   MenuItem,
   IconButton,
-  Link,
 } from "@suid/material";
-import { Component, Show, createSignal, For } from "solid-js";
+import {
+  Component,
+  Show,
+  createSignal,
+  For,
+  Setter,
+  createEffect,
+} from "solid-js";
 import { Flag } from "./commons/Flag";
 import { backgroundDistinctFrom } from "../utils";
 import { nameGenerator } from "../deviceNames";
 import { setInput2 } from "../stores/InputStore";
 import { ethers } from "ethers";
 import { NETWORKS } from "../stores/NetworksStore";
+import { ArrowDropDown, ArrowRight, DeleteOutline } from "@suid/icons-material";
 import { TRACKER } from "../stores/TrackerStore";
-import { ArrowCircleDown, ArrowCircleRight, ArrowDownward, ArrowDropDown, ArrowForward, ArrowRight, DeleteOutline } from "@suid/icons-material";
 
 export const SignatureRecover: Component<{
   signature:
     | v2.signature.UnrecoveredSignature
     | v2.signature.UnrecoveredChainedSignature;
+  setRecovered: Setter<
+    v2.signature.Signature | v2.signature.ChainedSignature | undefined
+  >;
+  setErrorRecover: Setter<string>;
 }> = (props) => {
+  const queryString = window.location.search;
+  const urlParams = new URLSearchParams(queryString);
   const [chain, setChain] = createSignal(1);
   const [transactions, setTransactions] = createSignal<
     commons.transaction.Transaction[]
@@ -45,10 +57,23 @@ export const SignatureRecover: Component<{
   const [nonce, setNonce] = createSignal("");
   const [subdigest, setSubdigest] = createSignal("");
   const [address, setAddress] = createSignal("");
-  const [imageHash, setImageHash] = createSignal("");
-  const [error, setError] = createSignal(false);
   const [recovering, setRecovering] = createSignal(false);
   const [open, setOpen] = createSignal(false);
+
+  createEffect(() => {
+    if (nonce() && transactions().length !== 0) {
+      setDigest(
+        commons.transaction.digestOfTransactions(nonce(), transactions())
+      );
+    }
+  });
+
+  createEffect(() => {
+    const digest = urlParams.get("digest");
+    if (digest) {
+      setDigest(digest);
+    }
+  });
 
   const handleTransactionChange = <
     K extends keyof commons.transaction.Transaction
@@ -83,9 +108,18 @@ export const SignatureRecover: Component<{
 
   const recover = async (e: Event) => {
     e.preventDefault();
+    props.setErrorRecover("");
     setRecovering(true);
-    setError(false);
+    props.setRecovered(undefined);
     try {
+      if (
+        v2.signature.isUnrecoveredChainedSignature(props.signature) &&
+        (!digest() || !address())
+      ) {
+        throw new Error(
+          "Chained signature recovery requires detailed signed payload, subdigest is not enough"
+        );
+      }
       let payload:
         | commons.signature.SignedPayload
         | {
@@ -99,7 +133,6 @@ export const SignatureRecover: Component<{
               commons.transaction.digestOfTransactions(nonce(), transactions()),
             address: address(),
           };
-      console.log(NETWORKS.find((n) => n.chainId === chain())?.rpcUrl);
       const recovered = await v2.signature.recoverSignature(
         props.signature,
         payload,
@@ -108,14 +141,14 @@ export const SignatureRecover: Component<{
         )
       );
       const imageHash = v2.config.imageHash(recovered.config);
-      const config = await TRACKER.configOfImageHash({ imageHash });
-      if (!config) {
-        throw new Error("Invalid payload");
+      const validConfig = await TRACKER.configOfImageHash({ imageHash });
+      if (!validConfig) {
+        throw new Error("Invalid config");
       }
-      setImageHash(imageHash);
+      props.setRecovered(recovered);
       setRecovering(false);
     } catch (error) {
-      setError(true);
+      props.setErrorRecover(String(error));
       setRecovering(false);
     }
   };
@@ -139,7 +172,7 @@ export const SignatureRecover: Component<{
       </Typography>
       <Show when={open()}>
         <Grid container spacing={2}>
-          <Grid item xs={12} sx={{marginTop: "20px"}}>
+          <Grid item xs={12} sx={{ marginTop: "20px" }}>
             <TextField
               onChange={(e) => setSubdigest(e.target.value)}
               value={subdigest()}
@@ -148,7 +181,7 @@ export const SignatureRecover: Component<{
               fullWidth
             />
           </Grid>
-          <Grid item xs={12}>
+          <Grid item xs={12} sx={{ marginBottom: "20px" }}>
             <Grid container spacing={2}>
               <For each={transactions()}>
                 {(tx, index) => (
@@ -307,7 +340,11 @@ export const SignatureRecover: Component<{
             <FormControl variant="outlined" fullWidth>
               <InputLabel>Chain</InputLabel>
               <Select
-                disabled={!!subdigest()}
+                disabled={
+                  !!subdigest() ||
+                  props.signature.type ===
+                    v2.signature.SignatureType.NoChainIdDynamic
+                }
                 label="Dropdown"
                 onChange={(e) => setChain(e.target.value)}
                 value={chain()}
@@ -333,21 +370,6 @@ export const SignatureRecover: Component<{
               Recover
             </Button>
           </Grid>
-          <Grid item xs={6} textAlign="right">
-            <Show when={error() || !!imageHash()}>
-              <Typography component="span" color={error() ? "error" : "green"}>
-                {error() ? "Invalid payload!" : "Signature recovered! "}
-              </Typography>
-              <Show when={!error() && !!imageHash()}>
-                <Link
-                  sx={{ fontSize: 12 }}
-                  href={`${location.pathname}?input=${imageHash()}`}
-                >
-                  Config Details
-                </Link>
-              </Show>
-            </Show>
-          </Grid>
         </Grid>
       </Show>
     </Box>
@@ -358,7 +380,12 @@ export const V2SignatureView: Component<{
   signature:
     | v2.signature.UnrecoveredSignature
     | v2.signature.UnrecoveredChainedSignature;
+  recovered: v2.signature.Signature | v2.signature.ChainedSignature | undefined;
 }> = (props) => {
+  const [recovered, setRecovered] = createSignal<
+    v2.signature.Signature | v2.signature.ChainedSignature | undefined
+  >();
+  const [errorRecover, setErrorRecover] = createSignal("");
   const sigType = () => {
     switch (props.signature.type) {
       case v2.signature.SignatureType.Chained:
@@ -374,18 +401,65 @@ export const V2SignatureView: Component<{
     }
   };
 
+  const onlyTopSig = {
+    type: props.signature.type,
+    version: props.signature.version,
+    decoded: props.signature.decoded,
+  };
+
+  const getRecoveredSignature = (
+    recovered: any,
+    signature: v2.signature.UnrecoveredSignature
+  ) => {
+    if (!recovered) {
+      return null;
+    }
+    if (recovered.suffix) {
+      for (const suffixSignature of recovered.suffix) {
+        if (getRecoveredSignature(suffixSignature, signature))
+          return suffixSignature;
+      }
+    }
+    if (
+      v2.signature.encodeSignature(recovered) ===
+      v2.signature.encodeSignature(signature)
+    ) {
+      return recovered;
+    }
+    return null;
+  };
+
   return (
     <>
       <Grid container spacing={2} sx={{ marginBottom: "40px" }}>
         <Flag grid label="Version" value={props.signature.version.toString()} />
         <Flag grid label="Type" value={sigType()} />
         <Grid item width="100%" sx={{ marginTop: "20px" }}>
-          <SignatureRecover signature={props.signature} />
+          <SignatureRecover
+            signature={props.signature}
+            setRecovered={setRecovered}
+            setErrorRecover={setErrorRecover}
+          />
         </Grid>
         <Grid item width="100%">
           <Typography pb="1rem" pt="1rem" textAlign="left">
             Decoded / Recovered
           </Typography>
+          <Show when={recovered() || props.recovered}>
+            {(recovered() || props.recovered) && (
+              <RecoveredSigView
+                signature={getRecoveredSignature(
+                  recovered() || props.recovered,
+                  onlyTopSig
+                )}
+              />
+            )}
+          </Show>
+          <Show when={errorRecover()}>
+            <Box textAlign="left" sx={{ marginBottom: "20px" }}>
+              <Typography color="error">{errorRecover()}</Typography>
+            </Box>
+          </Show>
           <Paper>
             <Box alignContent="left" textAlign="left">
               <V2UnrecoveredSignatureView node={props.signature.decoded.tree} />
@@ -394,15 +468,36 @@ export const V2SignatureView: Component<{
         </Grid>
       </Grid>
 
-      {v2.signature.isUnrecoveredChainedSignature(props.signature) &&
-        props.signature.suffix.length > 0 && (
-          <>
-            {props.signature.suffix.map((suffixSig) => (
-              <V2SignatureView signature={suffixSig} />
-            ))}
-          </>
-        )}
+      {v2.signature.isUnrecoveredChainedSignature(props.signature) && (
+        <>
+          {props.signature.suffix.map((suffixSig) => (
+            <V2SignatureView recovered={recovered()} signature={suffixSig} />
+          ))}
+        </>
+      )}
     </>
+  );
+};
+
+export const RecoveredSigView: Component<{
+  signature: v2.signature.Signature | null;
+}> = (props) => {
+  const imageHash = props.signature
+    ? v2.config.imageHash(props.signature.config)
+    : undefined;
+  return (
+    <Show when={imageHash}>
+      <Box textAlign="left" sx={{ marginBottom: "20px" }}>
+        <Typography component="span" sx={{ fontSize: 14 }}>
+          Image Hash: {imageHash}
+        </Typography>
+        <Typography variant="code" ml="0.5rem">
+          <a href="#" onClick={() => setInput2(imageHash)}>
+            {"[->]"}
+          </a>
+        </Typography>
+      </Box>
+    </Show>
   );
 };
 
