@@ -143,7 +143,7 @@ export const CallDataView: Component<{
   const [txs, nonce, signature] = props.tx.args;
   const decodedNonce = commons.transaction.decodeNonce(nonce);
   const sequenceTxs = txs.map((tx: any): commons.transaction.Transaction => {
-    return { to: tx.target, revertOnError: tx.revertOnError, delegateCall: tx.delegateCall, value: tx.value, data: tx.data }
+    return { to: tx.target, revertOnError: tx.revertOnError, delegateCall: tx.delegateCall, value: tx.value, data: tx.data, gasLimit: tx.gasLimit }
   })
 
   return (
