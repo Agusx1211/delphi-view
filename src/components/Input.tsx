@@ -48,7 +48,7 @@ export const InputView: Component<{ input?: string, optional?: boolean, wallet: 
       <ImageHashView imageHash={props.input!} />
     </Show>
     <Show when={asV2Signature()} keyed>
-      { (sig) => <><h2>Signature</h2><V2SignatureView signature={sig} /></> }
+      { (sig) => <><h2>Signature</h2><V2SignatureView recovered={undefined} signature={sig} /></> }
     </Show>
     <Show when={asCallData()} keyed>
       { (tx) => <><h2>Calldata</h2><CallDataView tx={tx} /></> }

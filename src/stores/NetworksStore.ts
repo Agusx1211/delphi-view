@@ -26,6 +26,10 @@ export const NETWORKS: NetworkConfig[] = [
     isDefaultChain: true
   },
   {
+    ...networks[ChainId.SEPOLIA],
+    ...genUrls('sepolia'),
+  },
+  {
     ...networks[ChainId.POLYGON],
     ...genUrls('polygon'),
   },
@@ -44,6 +48,10 @@ export const NETWORKS: NetworkConfig[] = [
   {
     ...networks[ChainId.ARBITRUM_NOVA],
     ...genUrls('arbitrum-nova'),
+  },
+  {
+    ...networks[ChainId.ARBITRUM_SEPOLIA],
+    ...genUrls('arbitrum-sepolia'),
   },
   {
     ...networks[ChainId.OPTIMISM],
