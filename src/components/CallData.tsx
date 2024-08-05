@@ -16,6 +16,9 @@ import { ethers } from "ethers";
 
 const TransactionView: Component<{
   tx: commons.transaction.TransactionEncoded;
+  chain: number | undefined;
+  walletAddress: string | undefined;
+  calldata: string | undefined;
 }> = (props) => {
   const decodeData = (calldata: string) => {
     let parsedTx = undefined;
@@ -91,7 +94,12 @@ const TransactionView: Component<{
             </For>
             {parsedTx &&
               (parsedTx.name === "execute" ? (
-                <CallDataView tx={parsedTx} />
+                <CallDataView
+                  tx={parsedTx}
+                  chain={props.chain}
+                  walletAddress={props.walletAddress}
+                  calldata={props.calldata}
+                />
               ) : (
                 <ListItem disablePadding>
                   <Card
@@ -139,12 +147,12 @@ const TransactionView: Component<{
 
 export const CallDataView: Component<{
   tx: ethers.utils.TransactionDescription;
+  chain?: number;
+  walletAddress?: string;
+  calldata?: string;
 }> = (props) => {
   const [txs, nonce, signature] = props.tx.args;
   const decodedNonce = commons.transaction.decodeNonce(nonce);
-  const sequenceTxs = txs.map((tx: commons.transaction.TransactionEncoded): commons.transaction.Transaction => {
-    return { to: tx.target, revertOnError: tx.revertOnError, delegateCall: tx.delegateCall, value: tx.value, data: tx.data, gasLimit: tx.gasLimit }
-  })
 
   return (
     <Box sx={{ padding: "10px", textAlign: "left" }}>
@@ -157,7 +165,12 @@ export const CallDataView: Component<{
         {txs && txs.length > 0 && (
           <Grid container direction={"column"} gap={1}>
             {txs.map((tx: commons.transaction.TransactionEncoded) => (
-              <TransactionView tx={tx} />
+              <TransactionView
+                tx={tx}
+                calldata={props.calldata}
+                walletAddress={props.walletAddress}
+                chain={props.chain}
+              />
             ))}
           </Grid>
         )}
@@ -198,10 +211,16 @@ export const CallDataView: Component<{
         </Typography>
         {signature !== "0x" && (
           <Typography variant="code" ml="0.5rem">
-          <a href={`${location.pathname}?input=${signature}&digest=${commons.transaction.digestOfTransactions(nonce, sequenceTxs)}`}>
-            {"[->]"}
-          </a>
-        </Typography>
+            <a
+              href={`${location.pathname}?input=${signature}${
+                props.calldata ? `&calldata=${props.calldata}` : ""
+              }${props.chain ? `&chain=${props.chain}` : ""}${
+                props.walletAddress ? `&wallet=${props.walletAddress}` : ""
+              }`}
+            >
+              {"[->]"}
+            </a>
+          </Typography>
         )}
       </Paper>
     </Box>
