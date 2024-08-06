@@ -12,6 +12,7 @@ import {
   MenuItem,
   IconButton,
 } from "@suid/material";
+import { walletContracts } from "@0xsequence/abi";
 import {
   Component,
   Show,
@@ -27,12 +28,12 @@ import { setInput2 } from "../stores/InputStore";
 import { ethers } from "ethers";
 import { NETWORKS } from "../stores/NetworksStore";
 import { ArrowDropDown, ArrowRight, DeleteOutline } from "@suid/icons-material";
-import { TRACKER } from "../stores/TrackerStore";
 
 export const SignatureRecover: Component<{
   signature:
     | v2.signature.UnrecoveredSignature
     | v2.signature.UnrecoveredChainedSignature;
+  suffixSig: boolean;
   setRecovered: Setter<
     v2.signature.Signature | v2.signature.ChainedSignature | undefined
   >;
@@ -40,17 +41,17 @@ export const SignatureRecover: Component<{
 }> = (props) => {
   const queryString = window.location.search;
   const urlParams = new URLSearchParams(queryString);
-  const [chain, setChain] = createSignal(1);
+  const [chain, setChain] = createSignal(0);
   const [transactions, setTransactions] = createSignal<
     commons.transaction.Transaction[]
   >([
     {
       to: "",
-      value: "0",
-      data: "0x",
+      value: "",
+      data: "",
       revertOnError: true,
       delegateCall: false,
-      gasLimit: "0",
+      gasLimit: "",
     },
   ]);
   const [digest, setDigest] = createSignal("");
@@ -60,18 +61,77 @@ export const SignatureRecover: Component<{
   const [recovering, setRecovering] = createSignal(false);
   const [open, setOpen] = createSignal(false);
 
+  const mainModuleInterface = new ethers.utils.Interface(
+    walletContracts.mainModule.abi
+  );
+
   createEffect(() => {
-    if (nonce() && transactions().length !== 0) {
-      setDigest(
-        commons.transaction.digestOfTransactions(nonce(), transactions())
-      );
-    }
+    try {
+      if (nonce() && transactions().length !== 0) {
+        setDigest(
+          commons.transaction.digestOfTransactions(nonce(), transactions())
+        );
+      }
+    } catch {}
   });
 
   createEffect(() => {
-    const digest = urlParams.get("digest");
-    if (digest) {
-      setDigest(digest);
+    try {
+      if (digest() && address()) {
+        setSubdigest(
+          commons.signature.subdigestOf({
+            chainId: chain(),
+            address: address(),
+            digest: digest(),
+          })
+        );
+        recover()
+      }
+    } catch {}
+  });
+
+  createEffect(() => {
+    if (!props.suffixSig) {
+      const calldata = urlParams.get("calldata");
+      const chain = urlParams.get("chain");
+      const wallet = urlParams.get("wallet");
+
+      if (calldata) {
+        try {
+          const parsedTx = mainModuleInterface.parseTransaction({
+            data: calldata,
+          });
+          const [txs, nonce] = parsedTx.args;
+          const sequenceTxs = txs.map(
+            (
+              tx: commons.transaction.TransactionEncoded
+            ): commons.transaction.Transaction => {
+              return {
+                to: tx.target,
+                revertOnError: tx.revertOnError,
+                delegateCall: tx.delegateCall,
+                value: tx.value,
+                data: tx.data,
+                gasLimit: tx.gasLimit,
+              };
+            }
+          );
+          setTransactions(sequenceTxs);
+          setNonce(nonce);
+        } catch {}
+      }
+
+      if (
+        chain &&
+        typeof Number(chain) === "number" &&
+        props.signature.type !== v2.signature.SignatureType.NoChainIdDynamic
+      ) {
+        setChain(Number(chain));
+      }
+
+      if (wallet && ethers.utils.isAddress(wallet)) {
+        setAddress(wallet);
+      }
     }
   });
 
@@ -97,24 +157,45 @@ export const SignatureRecover: Component<{
     setTransactions((prevTxs) =>
       prevTxs.concat({
         to: "",
-        value: "0",
-        data: "0x",
+        value: "",
+        data: "",
         revertOnError: true,
         delegateCall: false,
-        gasLimit: "0",
+        gasLimit: "",
       })
     );
   };
 
-  const recover = async (e: Event) => {
-    e.preventDefault();
+  const reset = () => {
+    setAddress("");
+    setTransactions([
+      {
+        to: "",
+        value: "",
+        data: "",
+        revertOnError: true,
+        delegateCall: false,
+        gasLimit: "",
+      },
+    ]);
+    setChain(0);
+    setDigest("");
+    setSubdigest("");
+    setNonce("");
+    props.setErrorRecover("")
+    props.setRecovered(undefined)
+  };
+
+  const recover = async () => {
+    if (!subdigest()) return;
     props.setErrorRecover("");
     setRecovering(true);
     props.setRecovered(undefined);
     try {
       if (
         v2.signature.isUnrecoveredChainedSignature(props.signature) &&
-        (!digest() || !address())
+        !digest() &&
+        !address()
       ) {
         throw new Error(
           "Chained signature recovery requires detailed signed payload, subdigest is not enough"
@@ -124,15 +205,13 @@ export const SignatureRecover: Component<{
         | commons.signature.SignedPayload
         | {
             subdigest: string;
-          } = !!subdigest()
-        ? { subdigest: subdigest() }
-        : {
+          } = v2.signature.isUnrecoveredChainedSignature(props.signature)
+        ? {
             chainId: ethers.BigNumber.from(chain()),
-            digest:
-              digest() ||
-              commons.transaction.digestOfTransactions(nonce(), transactions()),
+            digest: digest(),
             address: address(),
-          };
+          }
+        : { subdigest: subdigest() };
       const recovered = await v2.signature.recoverSignature(
         props.signature,
         payload,
@@ -140,11 +219,6 @@ export const SignatureRecover: Component<{
           NETWORKS.find((n) => n.chainId === chain())?.rpcUrl
         )
       );
-      const imageHash = v2.config.imageHash(recovered.config);
-      const validConfig = await TRACKER.configOfImageHash({ imageHash });
-      if (!validConfig) {
-        throw new Error("Invalid config");
-      }
       props.setRecovered(recovered);
       setRecovering(false);
     } catch (error) {
@@ -155,8 +229,6 @@ export const SignatureRecover: Component<{
 
   return (
     <Box
-      onSubmit={recover}
-      component="form"
       textAlign="left"
       sx={{
         "& .MuiTextField-root": { width: "100%" },
@@ -168,19 +240,10 @@ export const SignatureRecover: Component<{
         {open() ? <ArrowDropDown /> : <ArrowRight />}
       </IconButton>
       <Typography component="span" sx={{ fontSize: 16, fontWeight: "bold" }}>
-        Recover Config
+        Recover Signature
       </Typography>
       <Show when={open()}>
         <Grid container spacing={2}>
-          <Grid item xs={12} sx={{ marginTop: "20px" }}>
-            <TextField
-              onChange={(e) => setSubdigest(e.target.value)}
-              value={subdigest()}
-              label="Subdigest"
-              variant="outlined"
-              fullWidth
-            />
-          </Grid>
           <Grid item xs={12} sx={{ marginBottom: "20px" }}>
             <Grid container spacing={2}>
               <For each={transactions()}>
@@ -330,7 +393,6 @@ export const SignatureRecover: Component<{
             <TextField
               onChange={(e) => setDigest(e.target.value)}
               value={digest()}
-              disabled={!!subdigest()}
               label="Digest"
               variant="outlined"
               fullWidth
@@ -341,14 +403,14 @@ export const SignatureRecover: Component<{
               <InputLabel>Chain</InputLabel>
               <Select
                 disabled={
-                  !!subdigest() ||
                   props.signature.type ===
-                    v2.signature.SignatureType.NoChainIdDynamic
+                  v2.signature.SignatureType.NoChainIdDynamic
                 }
                 label="Dropdown"
                 onChange={(e) => setChain(e.target.value)}
                 value={chain()}
               >
+                <MenuItem value={0}>no chain</MenuItem>
                 <For each={NETWORKS}>
                   {(n) => <MenuItem value={n.chainId}>{n.name}</MenuItem>}
                 </For>
@@ -359,16 +421,27 @@ export const SignatureRecover: Component<{
             <TextField
               onChange={(e) => setAddress(e.target.value)}
               value={address()}
-              disabled={!!subdigest()}
               label="Wallet address"
               variant="outlined"
               fullWidth
             />
           </Grid>
+          <Grid item xs={12}>
+            <TextField
+              onChange={(e) => setSubdigest(e.target.value)}
+              value={subdigest()}
+              label="Subdigest"
+              variant="outlined"
+              fullWidth
+            />
+          </Grid>
           <Grid item xs={6} textAlign="left">
-            <Button disabled={recovering()} type="submit">
+            <Button disabled={recovering() || !subdigest()} onClick={recover}>
               Recover
             </Button>
+          </Grid>
+          <Grid item xs={6} textAlign="right">
+            <Button onClick={reset}>Reset</Button>
           </Grid>
         </Grid>
       </Show>
@@ -380,7 +453,8 @@ export const V2SignatureView: Component<{
   signature:
     | v2.signature.UnrecoveredSignature
     | v2.signature.UnrecoveredChainedSignature;
-  recovered: v2.signature.Signature | v2.signature.ChainedSignature | undefined;
+  recovered?: v2.signature.Signature | v2.signature.ChainedSignature;
+  suffixSig: boolean
 }> = (props) => {
   const [recovered, setRecovered] = createSignal<
     v2.signature.Signature | v2.signature.ChainedSignature | undefined
@@ -410,7 +484,7 @@ export const V2SignatureView: Component<{
   const getRecoveredSignature = (
     recovered: any,
     signature: v2.signature.UnrecoveredSignature
-  ) => {
+  ): v2.signature.Signature | null => {
     if (!recovered) {
       return null;
     }
@@ -437,6 +511,7 @@ export const V2SignatureView: Component<{
         <Grid item width="100%" sx={{ marginTop: "20px" }}>
           <SignatureRecover
             signature={props.signature}
+            suffixSig={props.suffixSig}
             setRecovered={setRecovered}
             setErrorRecover={setErrorRecover}
           />
@@ -455,14 +530,21 @@ export const V2SignatureView: Component<{
               />
             )}
           </Show>
-          <Show when={errorRecover()}>
+          <Show when={errorRecover() && !(recovered() || props.recovered)}>
             <Box textAlign="left" sx={{ marginBottom: "20px" }}>
               <Typography color="error">{errorRecover()}</Typography>
             </Box>
           </Show>
           <Paper>
             <Box alignContent="left" textAlign="left">
-              <V2UnrecoveredSignatureView node={props.signature.decoded.tree} />
+              <V2UnrecoveredSignatureView
+                node={
+                  getRecoveredSignature(
+                    recovered() || props.recovered,
+                    onlyTopSig
+                  )?.config.tree || props.signature.decoded.tree
+                }
+              />
             </Box>
           </Paper>
         </Grid>
@@ -471,7 +553,7 @@ export const V2SignatureView: Component<{
       {v2.signature.isUnrecoveredChainedSignature(props.signature) && (
         <>
           {props.signature.suffix.map((suffixSig) => (
-            <V2SignatureView recovered={recovered()} signature={suffixSig} />
+            <V2SignatureView suffixSig={true} recovered={recovered()} signature={suffixSig} />
           ))}
         </>
       )}
@@ -502,7 +584,7 @@ export const RecoveredSigView: Component<{
 };
 
 export const V2UnrecoveredSignatureView: Component<{
-  node: v2.signature.UnrecoveredTopology;
+  node: v2.signature.UnrecoveredTopology | v2.config.Topology;
   background?: number;
 }> = (props) => {
   const [open, setOpen] = createSignal(true);
