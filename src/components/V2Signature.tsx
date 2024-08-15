@@ -191,6 +191,7 @@ export const SignatureRecover: Component<{
     setDigest("");
     setSubdigest("");
     setNonce("");
+    setMessage("")
     props.setErrorRecover("");
     props.setRecovered(undefined);
   };
@@ -399,6 +400,7 @@ export const SignatureRecover: Component<{
             <Button onClick={handleAddTx}>Add Transaction</Button>
           </Grid>
           <Grid item xs={12} sx={{ marginTop: "20px" }}>
+            <Typography sx={{ fontSize: 14, marginBottom: "20px" }} color="text.secondary" textAlign="center">OR</Typography>
             <TextField
               onChange={(e) => setMessage(e.target.value)}
               value={message()}
