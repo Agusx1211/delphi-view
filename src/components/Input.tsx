@@ -70,16 +70,19 @@ export const InputView: Component<{
     } catch {}
 
     if (mayBeImageHash(input)) {
-      const config = await TRACKER.configOfImageHash({ imageHash: input });
-
-      if (!!config) {
+      try {
+        const config = await TRACKER.configOfImageHash({ imageHash: input });
         setConfig(config);
-        return;
-      }
-
-      const chainReq = NETWORKS.map((network) => {
-        const provider = new ethers.providers.JsonRpcProvider(network.rpcUrl);
-        return provider.getTransaction(input);
+        return
+      } catch {}
+      
+      const chainReq = NETWORKS.map(async (network) => {
+        try {
+          const provider = new ethers.providers.JsonRpcProvider(network.rpcUrl);
+          return await provider.getTransaction(input);
+        } catch {
+          return null;
+        }
       });
 
       const chainRes = await Promise.all(chainReq);

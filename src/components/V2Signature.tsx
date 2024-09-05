@@ -55,6 +55,7 @@ export const SignatureRecover: Component<{
     },
   ]);
   const [digest, setDigest] = createSignal("");
+  const [message, setMessage] = createSignal("");
   const [nonce, setNonce] = createSignal("");
   const [subdigest, setSubdigest] = createSignal("");
   const [address, setAddress] = createSignal("");
@@ -77,6 +78,14 @@ export const SignatureRecover: Component<{
 
   createEffect(() => {
     try {
+      if (message()) {
+        setDigest(ethers.utils.hashMessage(message()));
+      }
+    } catch {}
+  });
+
+  createEffect(() => {
+    try {
       if (digest() && address()) {
         setSubdigest(
           commons.signature.subdigestOf({
@@ -85,7 +94,7 @@ export const SignatureRecover: Component<{
             digest: digest(),
           })
         );
-        recover()
+        recover();
       }
     } catch {}
   });
@@ -182,8 +191,9 @@ export const SignatureRecover: Component<{
     setDigest("");
     setSubdigest("");
     setNonce("");
-    props.setErrorRecover("")
-    props.setRecovered(undefined)
+    setMessage("")
+    props.setErrorRecover("");
+    props.setRecovered(undefined);
   };
 
   const recover = async () => {
@@ -390,6 +400,16 @@ export const SignatureRecover: Component<{
             <Button onClick={handleAddTx}>Add Transaction</Button>
           </Grid>
           <Grid item xs={12} sx={{ marginTop: "20px" }}>
+            <Typography sx={{ fontSize: 14, marginBottom: "20px" }} color="text.secondary" textAlign="center">OR</Typography>
+            <TextField
+              onChange={(e) => setMessage(e.target.value)}
+              value={message()}
+              label="Message"
+              variant="outlined"
+              fullWidth
+            />
+          </Grid>
+          <Grid item xs={12} sx={{ marginTop: "20px" }}>
             <TextField
               onChange={(e) => setDigest(e.target.value)}
               value={digest()}
@@ -454,7 +474,7 @@ export const V2SignatureView: Component<{
     | v2.signature.UnrecoveredSignature
     | v2.signature.UnrecoveredChainedSignature;
   recovered?: v2.signature.Signature | v2.signature.ChainedSignature;
-  suffixSig: boolean
+  suffixSig: boolean;
 }> = (props) => {
   const [recovered, setRecovered] = createSignal<
     v2.signature.Signature | v2.signature.ChainedSignature | undefined
@@ -553,7 +573,11 @@ export const V2SignatureView: Component<{
       {v2.signature.isUnrecoveredChainedSignature(props.signature) && (
         <>
           {props.signature.suffix.map((suffixSig) => (
-            <V2SignatureView suffixSig={true} recovered={recovered()} signature={suffixSig} />
+            <V2SignatureView
+              suffixSig={true}
+              recovered={recovered()}
+              signature={suffixSig}
+            />
           ))}
         </>
       )}

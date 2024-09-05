@@ -98,7 +98,7 @@ const TransactionView: Component<{
                   tx={parsedTx}
                   chain={props.chain}
                   walletAddress={props.walletAddress}
-                  calldata={props.calldata}
+                  calldata={ethers.utils.hexlify(props.tx.data)}
                 />
               ) : (
                 <ListItem disablePadding>
