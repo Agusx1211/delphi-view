@@ -26,5 +26,5 @@ const genNetworkConfig: (network: NetworkMetadata) => NetworkConfig = (network) 
 
 // Add default values for API, relayer and Indexer
 export const NETWORKS: NetworkConfig[] = Object.values(networks)
-  .filter(n => !n.deprecated && n)
+  .filter(n => !n.deprecated)
   .map(n => genNetworkConfig(n))
