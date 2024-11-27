@@ -32,7 +32,7 @@ export const createStatusStore = (address: string): AccountStatusStore => {
   });
 
   (async () => {
-    if (!ethers.utils.isAddress(address)) {
+    if (!ethers.isAddress(address)) {
       return;
     }
 

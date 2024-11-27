@@ -23,7 +23,7 @@ const TransactionView: Component<{
   const decodeData = (calldata: string) => {
     let parsedTx = undefined;
     try {
-      const mainModuleUpgradableInterface = new ethers.utils.Interface(
+      const mainModuleUpgradableInterface = new ethers.Interface(
         walletContracts.mainModuleUpgradable.abi
       );
       parsedTx = mainModuleUpgradableInterface.parseTransaction({
@@ -32,14 +32,14 @@ const TransactionView: Component<{
     } catch {}
 
     try {
-      const mainModuleInterface = new ethers.utils.Interface(
+      const mainModuleInterface = new ethers.Interface(
         walletContracts.mainModule.abi
       );
       parsedTx = mainModuleInterface.parseTransaction({ data: calldata });
     } catch {}
 
     try {
-      const walletFactoryInterface = new ethers.utils.Interface(
+      const walletFactoryInterface = new ethers.Interface(
         walletContracts.factory.abi
       );
       parsedTx = walletFactoryInterface.parseTransaction({ data: calldata });
@@ -48,7 +48,7 @@ const TransactionView: Component<{
     return parsedTx;
   };
 
-  const parsedTx = decodeData(ethers.utils.hexlify(props.tx.data));
+  const parsedTx = decodeData(ethers.hexlify(props.tx.data));
 
   return (
     <Box sx={{ marginBottom: "15px", textAlign: "left" }}>
@@ -66,16 +66,16 @@ const TransactionView: Component<{
                 },
                 {
                   label: "gasLimit",
-                  value: ethers.utils.formatUnits(props.tx.gasLimit, "wei"),
+                  value: ethers.formatUnits(props.tx.gasLimit, "wei"),
                 },
                 { label: "target", value: props.tx.target },
                 {
                   label: "value",
-                  value: ethers.utils.formatUnits(props.tx.value, "wei"),
+                  value: ethers.formatUnits(props.tx.value, "wei"),
                 },
                 {
                   label: "data",
-                  value: ethers.utils.hexlify(props.tx.data),
+                  value: ethers.hexlify(props.tx.data),
                 },
               ]}
             >
@@ -98,7 +98,7 @@ const TransactionView: Component<{
                   tx={parsedTx}
                   chain={props.chain}
                   walletAddress={props.walletAddress}
-                  calldata={ethers.utils.hexlify(props.tx.data)}
+                  calldata={ethers.hexlify(props.tx.data)}
                 />
               ) : (
                 <ListItem disablePadding>
@@ -146,7 +146,7 @@ const TransactionView: Component<{
 };
 
 export const CallDataView: Component<{
-  tx: ethers.utils.TransactionDescription;
+  tx: ethers.TransactionDescription;
   chain?: number;
   walletAddress?: string;
   calldata?: string;
@@ -184,19 +184,19 @@ export const CallDataView: Component<{
         <Typography sx={{ fontSize: 12, color: "text.secondary" }}>
           raw:{" "}
           <Typography variant="code" component="span">
-            {ethers.utils.formatUnits(nonce, "wei")}
+            {ethers.formatUnits(nonce, "wei")}
           </Typography>
         </Typography>
         <Typography sx={{ fontSize: 12, color: "text.secondary" }}>
           space:{" "}
           <Typography variant="code" component="span">
-            {ethers.utils.formatUnits(decodedNonce[0], "wei")}
+            {ethers.formatUnits(decodedNonce[0], "wei")}
           </Typography>
         </Typography>
         <Typography sx={{ fontSize: 12, color: "text.secondary" }}>
           nonce:{" "}
           <Typography variant="code" component="span">
-            {ethers.utils.formatUnits(decodedNonce[1], "wei")}
+            {ethers.formatUnits(decodedNonce[1], "wei")}
           </Typography>
         </Typography>
       </Paper>
