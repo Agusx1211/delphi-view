@@ -27,14 +27,14 @@ export const InputView: Component<{
     | undefined
   >();
   const [tx, setTx] = createSignal<
-    ethers.TransactionDescription | undefined
+    ethers.utils.TransactionDescription | undefined
   >();
   const [chain, setChain] = createSignal<number | undefined>();
   const [calldata, setCalldata] = createSignal<string | undefined>();
   const [walletAddress, setWalletAddress] = createSignal<string | undefined>();
   const [loading, setLoading] = createSignal(false);
 
-  const mainModuleInterface = new ethers.Interface(
+  const mainModuleInterface = new ethers.utils.Interface(
     walletContracts.mainModule.abi
   );
 
@@ -48,11 +48,11 @@ export const InputView: Component<{
     setConfig(undefined);
     setV2Signature(undefined);
 
-    let input: string = props.input ?? "";
+    let input = props.input ?? "";
 
     if (
-      ethers.isAddress(input as string) || 
-      ethers.isAddress((input.split("#")[0]) as string)
+      ethers.utils.isAddress(input) ||
+      ethers.utils.isAddress(input.split("#")[0])
     ) {
       setAddress(input);
       return;
@@ -64,11 +64,7 @@ export const InputView: Component<{
     } catch {}
 
     try {
-      const parsedTx = mainModuleInterface.parseTransaction({ data: input })
-      if (!parsedTx) {
-        throw new Error()
-      }
-      setTx(parsedTx);
+      setTx(mainModuleInterface.parseTransaction({ data: input }));
       setCalldata(input)
       return;
     } catch {}
@@ -82,7 +78,7 @@ export const InputView: Component<{
       
       const chainReq = NETWORKS.map(async (network) => {
         try {
-          const provider = new ethers.JsonRpcProvider(network.rpcUrl);
+          const provider = new ethers.providers.JsonRpcProvider(network.rpcUrl);
           return await provider.getTransaction(input);
         } catch {
           return null;
@@ -95,17 +91,10 @@ export const InputView: Component<{
 
       if (tx) {
         try {
-          const parsedTx = mainModuleInterface.parseTransaction({ data: tx.data })
-          if (!parsedTx) {
-            throw new Error()
-          }
-          setTx(parsedTx);
-          setChain(Number(tx.chainId));
+          setTx(mainModuleInterface.parseTransaction({ data: tx.data }));
+          setChain(tx.chainId);
           setCalldata(tx.data)
           const receipt = await tx.wait();
-          if (!receipt) {
-            throw new Error()
-          }
           const nonceChangedLog = receipt.logs.find(
             (log) =>
               log.topics[0] ===

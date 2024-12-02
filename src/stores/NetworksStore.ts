@@ -2,7 +2,7 @@ import { NetworkConfig, ChainId, networks, NetworkMetadata } from '@0xsequence/n
 
 export const indexerURL = (network: string) => `https://${network}-relayer.sequence.app`
 export const relayerURL = (network: string) => `https://${network}-indexer.sequence.app`
-export const nodesURL = (network: string) => `https://nodes.sequence.app/${network}/AQAAAAAAAJ34xUT-MXAgwfvO0h2r5DciJYE`
+export const nodesURL = (network: string) => `https://nodes.sequence.app/${network}`
 
 const genUrls = (networkName: string) => {
   const rpcUrl = nodesURL(networkName)
