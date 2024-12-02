@@ -1,7 +1,5 @@
 import { ethers } from "ethers";
 
-const abiCoder = new ethers.AbiCoder
-
 export function toUpperFirst(s: string) {
   if (!s || s.length === 0) return s
   return s.charAt(0).toUpperCase() + s.slice(1).toLowerCase()
@@ -16,7 +14,7 @@ export const backgroundDistinctFrom = (parentBackground1: number, salt: number, 
   const DISTANCE = 10;
 
   // Compute the hash
-  const hash = ethers.keccak256(abiCoder.encode(['uint256', 'string'], [parentBackground1, salt]));
+  const hash = ethers.utils.keccak256(ethers.utils.defaultAbiCoder.encode(['uint256', 'string'], [parentBackground1, salt]));
 
   // Calculate a deterministic yet distinct value from the hash
   let colorValue = parseInt(hash.slice(2, 10), 16) % (256 - MIN_VALUE) + MIN_VALUE;

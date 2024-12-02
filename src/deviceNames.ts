@@ -8,17 +8,17 @@ const DEVICE_EMOJIS = [
 ]
 
 export const nameGenerator = (seed: string, length: number): string => {
-  const wordListSize = 2048
+  const wordlistSize = 2048
   const words = ethers.wordlists.en
 
   let output = ''
-  let subSeed = ethers.keccak256(seed)
+  let subSeed = ethers.utils.keccak256(seed)
   for (let i = 0; i < length; i++) {
-    const index = Number(BigInt(subSeed) % BigInt(wordListSize))
+    const index = ethers.BigNumber.from(subSeed).mod(wordlistSize).toNumber()
     output = `${words.getWord(index)} ${output}`
-    subSeed = ethers.keccak256(subSeed)
+    subSeed = ethers.utils.keccak256(subSeed)
   }
 
-  const emojiIndex = Number(BigInt(subSeed) % BigInt(DEVICE_EMOJIS.length))
+  const emojiIndex = ethers.BigNumber.from(subSeed).mod(DEVICE_EMOJIS.length).toNumber()
   return `${DEVICE_EMOJIS[emojiIndex]} ${toUpperFirst(output)}`
 }

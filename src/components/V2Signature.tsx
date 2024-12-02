@@ -62,7 +62,7 @@ export const SignatureRecover: Component<{
   const [recovering, setRecovering] = createSignal(false);
   const [open, setOpen] = createSignal(false);
 
-  const mainModuleInterface = new ethers.Interface(
+  const mainModuleInterface = new ethers.utils.Interface(
     walletContracts.mainModule.abi
   );
 
@@ -79,7 +79,7 @@ export const SignatureRecover: Component<{
   createEffect(() => {
     try {
       if (message()) {
-        setDigest(ethers.hashMessage(message()));
+        setDigest(ethers.utils.hashMessage(message()));
       }
     } catch {}
   });
@@ -110,9 +110,6 @@ export const SignatureRecover: Component<{
           const parsedTx = mainModuleInterface.parseTransaction({
             data: calldata,
           });
-          if (!parsedTx) {
-            throw new Error()
-          }
           const [txs, nonce] = parsedTx.args;
           const sequenceTxs = txs.map(
             (
@@ -141,7 +138,7 @@ export const SignatureRecover: Component<{
         setChain(Number(chain));
       }
 
-      if (wallet && ethers.isAddress(wallet)) {
+      if (wallet && ethers.utils.isAddress(wallet)) {
         setAddress(wallet);
       }
     }
@@ -220,7 +217,7 @@ export const SignatureRecover: Component<{
             subdigest: string;
           } = v2.signature.isUnrecoveredChainedSignature(props.signature)
         ? {
-            chainId: BigInt(chain()),
+            chainId: ethers.BigNumber.from(chain()),
             digest: digest(),
             address: address(),
           }
@@ -228,7 +225,7 @@ export const SignatureRecover: Component<{
       const recovered = await v2.signature.recoverSignature(
         props.signature,
         payload,
-        new ethers.JsonRpcProvider(
+        new ethers.providers.JsonRpcProvider(
           NETWORKS.find((n) => n.chainId === chain())?.rpcUrl
         )
       );
@@ -782,7 +779,7 @@ export const V2UnrecoveredSignatureView: Component<{
 export const V2SubSignatureView: Component<{ signature: string }> = (props) => {
   // Last byte is the signature type
   const sigType = () => {
-    const arr = ethers.getBytes(props.signature);
+    const arr = ethers.utils.arrayify(props.signature);
     const type = arr[arr.length - 1];
 
     switch (type) {
@@ -807,8 +804,8 @@ export const V2SubSignatureView: Component<{ signature: string }> = (props) => {
   };
 
   const signature = () => {
-    const arr = ethers.getBytes(props.signature);
-    return ethers.hexlify(arr.slice(0, arr.length - 1));
+    const arr = ethers.utils.arrayify(props.signature);
+    return ethers.utils.hexlify(arr.slice(0, arr.length - 1));
   };
 
   return (
