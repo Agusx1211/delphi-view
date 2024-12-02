@@ -14,7 +14,7 @@ export class StaticSigner implements signers.SapientSigner {
     private readonly address: string,
     private readonly signature: string
   ) {
-    const raw = ethers.utils.arrayify(this.signature)
+    const raw = ethers.getBytes(this.signature)
 
     // Separate last byte as suffix
     this.savedSuffix = raw.slice(-1)
